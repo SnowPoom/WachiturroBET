@@ -11,7 +11,7 @@
         .tab-content.active { display: block; }
         
         .tabs-list {
-            display: grid;
+            display: grid; 
             grid-template-columns: 1fr 1fr;
             background: rgba(15, 23, 42, 0.5);
             padding: 0.25rem;
@@ -20,7 +20,7 @@
         }
         
         .tab-btn {
-            background: transparent;
+            background: transparent; 
             border: none;
             color: white;
             padding: 0.5rem;
@@ -31,7 +31,7 @@
         }
         
         .tab-btn.active {
-            background-color: rgba(168, 85, 247, 0.2);
+            background-color: rgba(168, 85, 247, 0.2); 
             color: #d8b4fe;
         }
         /* Mensajes de resultado */
@@ -47,6 +47,7 @@
                 <div class="logo-icon"><img src="${pageContext.request.contextPath}/jsp/image.png" alt="icon"></div>
                 <span>WachiturroBet</span>
             </a>
+            
             <div class="flex-center gap-2">
                 <a href="billetera.jsp" class="btn btn-ghost" style="background-color: rgba(168, 85, 247, 0.2);" title="Cartera">
                     <svg class="icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -68,18 +69,39 @@
             <p class="card-desc">Gestiona tus fondos y transacciones</p>
         </div>
 
-        <%-- Mostrar resultado si viene en request attributes --%>
+        <%-- LÓGICA AGREGADA: Manejo de mensajes Flash (Post-Redirect-Get) --%>
         <%
+            // 1. Verificar si hay mensajes guardados en sesion por el Controller
+            String flashStatus = (String) session.getAttribute("flash_status");
+            
+            if (flashStatus != null) {
+                // 2. Pasar estos datos al request actual para que los fragments funcionen
+                request.setAttribute("status", flashStatus);
+                request.setAttribute("message", session.getAttribute("flash_message"));
+                request.setAttribute("operacion", session.getAttribute("flash_operacion"));
+                request.setAttribute("monto", session.getAttribute("flash_monto"));
+                request.setAttribute("usuarioName", session.getAttribute("flash_usuarioName"));
+                
+                // 3. LIMPIAR la sesión para que al recargar la página no aparezca el mensaje de nuevo
+                session.removeAttribute("flash_status");
+                session.removeAttribute("flash_message");
+                session.removeAttribute("flash_operacion");
+                session.removeAttribute("flash_monto");
+                session.removeAttribute("flash_usuarioName");
+            }
+            
+            // Variable local para verificar qué status usar
             String status = (String) request.getAttribute("status");
-            // clear message handling to JSP fragments
         %>
+
+        <%-- Mostrar resultado según status --%>
         <% if (status != null && "OK".equals(status)) { %>
             <jsp:include page="/jsp/MensajeConfirmacionBilletera.jsp" />
         <% } else if (status != null) { %>
             <jsp:include page="/jsp/MensajeErrorBilletera.jsp" />
         <% } %>
 
-        <%-- Ensure session-derived variables are available for later rendering --%>
+        <%-- Variables de Sesión (Usuario y Saldo) --%>
         <%
             Object sessionUserObj = session.getAttribute("currentUser");
             Double sessionSaldoObj = null;
@@ -211,11 +233,8 @@
 
     <script>
         function switchTab(tabName) {
-            // Ocultar contenidos y desactivar botones
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-            // Activar selección
             document.getElementById('tab-' + tabName).classList.add('active');
             document.getElementById('btn-' + tabName).classList.add('active');
         }
