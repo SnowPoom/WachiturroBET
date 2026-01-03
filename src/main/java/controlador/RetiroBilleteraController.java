@@ -1,12 +1,7 @@
 package controlador;
 
-import modelo.dao.JPAUtil;
-import modelo.dao.jpa.BilleteraJPADAO;
-import modelo.dao.jpa.MovimientoJPADAO;
-import modelo.entidades.Billetera;
-import modelo.entidades.Movimiento;
-import modelo.entidades.TipoMovimiento;
-import modelo.entidades.UsuarioRegistrado;
+import java.io.IOException;
+import java.time.LocalDate;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
@@ -19,18 +14,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.time.LocalDate;
+import modelo.dao.JPAUtil;
+import modelo.dao.jpa.BilleteraJPADAO;
+import modelo.dao.jpa.MovimientoJPADAO;
+import modelo.entidades.Billetera;
+import modelo.entidades.Movimiento;
+import modelo.entidades.TipoMovimiento;
+import modelo.entidades.UsuarioRegistrado;
 
-@WebServlet("/recargarBilletera")
-public class RecargarBilleteraController extends HttpServlet {
-
-    private static final long serialVersionUID = 1L;
+@WebServlet("/retirarBilletera")
+public class RetiroBilleteraController extends HttpServlet {
+	private static final long serialVersionUID = 1L;
 
     private BilleteraJPADAO billeteraDAO;
     private MovimientoJPADAO movimientoDAO;
     private EntityManager em;
-
+    
     @Override
     public void init() throws ServletException {
         super.init();
@@ -38,7 +37,7 @@ public class RecargarBilleteraController extends HttpServlet {
         this.billeteraDAO = new BilleteraJPADAO(em);
         this.movimientoDAO = new MovimientoJPADAO(em);
     }
-
+    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // Simular usuario logeado: si no existe en sesión, crearlo y persistirlo
@@ -48,7 +47,7 @@ public class RecargarBilleteraController extends HttpServlet {
         RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
         rd.forward(req, resp);
     }
-
+    
     /**
      * Ensure a test user exists in the DB and is stored in the HTTP session as 'currentUser'.
      */
@@ -108,14 +107,13 @@ public class RecargarBilleteraController extends HttpServlet {
             e.printStackTrace();
         }
     }
-
+    
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // 1. Configuración inicial
-        String operacion = req.getParameter("operacion");
-        if (operacion == null) operacion = "RECARGA";
+        // 1. Configuración inicial 
+        String operacion = "RETIRO"; 
         
-        // 2. Obtener Usuario
+        // 2. Obtener Usuario 
         UsuarioRegistrado usuario = obtenerUsuarioDeSesionOParametro(req);
         
         if (usuario == null) {
@@ -123,7 +121,7 @@ public class RecargarBilleteraController extends HttpServlet {
             return;
         }
 
-        // 3. Obtener Monto (Usando el nuevo método)
+        // 3. Obtener Monto 
         Double monto = ingresarMonto(req);
 
         if (monto == null || !validarMonto(monto)) {
@@ -131,19 +129,13 @@ public class RecargarBilleteraController extends HttpServlet {
             return;
         }
 
-        // 4. Procesar según operación
-        if ("RECARGA".equalsIgnoreCase(operacion))
-        	procesarRecarga(req, monto, usuario);
-
+        // 4. Procesar el RETIRO
+        procesarRetiro(req, monto, usuario);
 
         // 5. Redirección final
         req.getRequestDispatcher("/jsp/billetera.jsp").forward(req, resp);
     }
-
-    // -------------------------------------------------------------------------
-    // MÉTODOS DE LÓGICA DE NEGOCIO (Refactorizados)
-    // -------------------------------------------------------------------------
-
+    
     /**
      * Método encargado de extraer y parsear el monto.
      * Corresponde al mensaje "ingresarMontoARecargar" del diagrama.
@@ -157,43 +149,42 @@ public class RecargarBilleteraController extends HttpServlet {
             return null;
         }
     }
-
+    
     /**
-     * Método encargado de la lógica de recarga.
-     * Corresponde al mensaje "procesarRecarga" del diagrama.
+     * Lógica de retiro .
      */
-    private void procesarRecarga(HttpServletRequest req, double monto, UsuarioRegistrado usuario) {
-        req.setAttribute("operacion", "RECARGA");
-
+    private void procesarRetiro(HttpServletRequest req, double monto, UsuarioRegistrado usuario) {
+        req.setAttribute("operacion", "RETIRO");
+        
         try {
-            // A. Actualizar saldo en BD
-            boolean recargado = billeteraDAO.recargarBilletera(monto, usuario);
-            
-            if (!recargado) {
+            boolean tieneFondos = billeteraDAO.verificarFondos(usuario, monto);
+            if (!tieneFondos) {
                 req.setAttribute("status", "ERROR");
-                req.setAttribute("message", "Fallo al recargar la billetera.");
+                req.setAttribute("message", "Fondos insuficientes para retirar $" + monto);
                 return;
             }
 
-            // B. Registrar movimiento
+            boolean retirado = billeteraDAO.retirarFondos(monto, usuario);
+            if (!retirado) {
+                req.setAttribute("status", "ERROR");
+                req.setAttribute("message", "Fallo al retirar fondos.");
+                return;
+            }
+
             Movimiento mov = new Movimiento();
             mov.setUsuario(usuario);
-            mov.setTipo(TipoMovimiento.RECARGA);
+            mov.setTipo(TipoMovimiento.RETIRO);
             mov.setMonto(monto);
             mov.setFecha(LocalDate.now());
 
-            boolean movGuardado = movimientoDAO.crearMovimiento(mov);
-            
-            if (!movGuardado) {
+            if (!movimientoDAO.crearMovimiento(mov)) {
                 req.setAttribute("status", "ERROR");
-                req.setAttribute("message", "Recarga exitosa, pero error al registrar movimiento.");
+                req.setAttribute("message", "Retiro exitoso, pero error al registrar movimiento.");
                 return;
             }
 
-            // C. Éxito
-            String msg = "La billetera fue recargada con $" + monto + " para usuario " + usuario.getNombre();
             req.setAttribute("status", "OK");
-            req.setAttribute("message", msg);
+            req.setAttribute("message", "Se retiraron $" + monto + " correctamente.");
             req.setAttribute("monto", monto);
             req.setAttribute("usuarioName", usuario.getNombre());
 
@@ -201,13 +192,11 @@ public class RecargarBilleteraController extends HttpServlet {
 
         } catch (Exception e) {
             req.setAttribute("status", "ERROR");
-            req.setAttribute("message", "Error inesperado: " + e.getMessage());
+            req.setAttribute("message", "Error inesperado en retiro: " + e.getMessage());
         }
     }
-
-  
-
-    // -------------------------------------------------------------------------
+    
+ // -------------------------------------------------------------------------
     // MÉTODOS AUXILIARES
     // -------------------------------------------------------------------------
 
@@ -231,7 +220,7 @@ public class RecargarBilleteraController extends HttpServlet {
         }
         return null;
     }
-
+    
     private void actualizarSaldoEnSesion(HttpServletRequest req, UsuarioRegistrado usuario) {
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("currentUser") != null) {
@@ -248,7 +237,7 @@ public class RecargarBilleteraController extends HttpServlet {
             }
         }
     }
-
+    
     private boolean validarMonto(double monto) {
         return monto > 0;
     }
@@ -265,5 +254,6 @@ public class RecargarBilleteraController extends HttpServlet {
         if (em != null && em.isOpen()) em.close();
         JPAUtil.close();
         super.destroy();
+    
     }
 }
