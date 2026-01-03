@@ -1,19 +1,39 @@
 package modelo.entidades;
 
-import java.time.LocalDateTime;
+import java.io.Serializable;
+import java.time.LocalDate;
+import jakarta.persistence.*;
 
-public class Movimiento {
+@Entity
+@Table(name = "movimientos")
+public class Movimiento  implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_movimiento")
     private int id;
-    private int idBilletera;
+
+    // FK to UsuarioRegistrado (id_usuario)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario")
+    private UsuarioRegistrado usuario;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo")
     private TipoMovimiento tipo;
+
+    @Column(name = "monto")
     private double monto;
-    private LocalDateTime fecha;
+
+    @Column(name = "fecha")
+    private LocalDate fecha;
 
     public Movimiento() {}
 
-    public Movimiento(int id, int idBilletera, TipoMovimiento tipo, double monto, LocalDateTime fecha) {
+    public Movimiento(int id, UsuarioRegistrado usuario, TipoMovimiento tipo, double monto, LocalDate fecha) {
         this.id = id;
-        this.idBilletera = idBilletera;
+        this.usuario = usuario;
         this.tipo = tipo;
         this.monto = monto;
         this.fecha = fecha;
@@ -27,12 +47,12 @@ public class Movimiento {
         this.id = id;
     }
 
-    public int getIdBilletera() {
-        return idBilletera;
+    public UsuarioRegistrado getUsuario() {
+        return usuario;
     }
 
-    public void setIdBilletera(int idBilletera) {
-        this.idBilletera = idBilletera;
+    public void setUsuario(UsuarioRegistrado usuario) {
+        this.usuario = usuario;
     }
 
     public TipoMovimiento getTipo() {
@@ -51,11 +71,11 @@ public class Movimiento {
         this.monto = monto;
     }
 
-    public LocalDateTime getFecha() {
+    public LocalDate getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDateTime fecha) {
+    public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
     }
 
@@ -63,7 +83,7 @@ public class Movimiento {
     public String toString() {
         return "Movimiento{" +
                 "id=" + id +
-                ", idBilletera=" + idBilletera +
+                ", usuarioId=" + (usuario != null ? usuario.getId() : "null") +
                 ", tipo=" + tipo +
                 ", monto=" + monto +
                 ", fecha=" + fecha +
