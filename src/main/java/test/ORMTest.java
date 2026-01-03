@@ -25,7 +25,7 @@ public class ORMTest {
         billetera.setUsuario(user); // La billetera conoce a su dueño
         user.setBilletera(billetera); // El dueño conoce su billetera
 
-        // 5. Iniciar Transacción
+        // 5. Iniciar Transacciónx
         em.getTransaction().begin();
 
         // 6. Guardar (Persist)
