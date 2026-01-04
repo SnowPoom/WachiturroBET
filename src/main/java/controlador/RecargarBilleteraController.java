@@ -48,6 +48,12 @@ public class RecargarBilleteraController extends HttpServlet {
         EntityManager em = JPAUtil.getEntityManager();
         
         try {
+            // Si no hay usuario en sesión, crear/asegurar el usuario de test
+            HttpSession sessionCheck = req.getSession(false);
+            if (sessionCheck == null || sessionCheck.getAttribute("currentUser") == null) {
+                ensureTestUser(req, em);
+            }
+
             // Instanciamos los DAOs con este EM fresco
             BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
             MovimientoJPADAO movimientoDAO = new MovimientoJPADAO(em);
@@ -62,14 +68,15 @@ public class RecargarBilleteraController extends HttpServlet {
                 return;
             }
 
-            Double monto = ingresarMonto(req);
+            Double monto = ingresarMontoARecargar(req);
             if (monto == null || !validarMonto(monto)) {
                 enviarError(req, resp, "El monto ingresado no es válido.", operacion);
                 return;
             }
 
             if ("RECARGA".equalsIgnoreCase(operacion)) {
-                procesarRecarga(req, monto, usuario, em, billeteraDAO, movimientoDAO);
+                boolean exitoso = procesarRecarga(req, monto, usuario, em, billeteraDAO, movimientoDAO);
+                // Se podrían tomar acciones adicionales según 'exitoso', pero la lógica de flash ya está en el método.
             }
 
             // PRG: Redirect final
@@ -85,7 +92,7 @@ public class RecargarBilleteraController extends HttpServlet {
 
     // --- LÓGICA REFACTORIZADA PARA RECIBIR EntityManager ---
 
-    private void procesarRecarga(HttpServletRequest req, double monto, UsuarioRegistrado usuario, 
+    private boolean procesarRecarga(HttpServletRequest req, double monto, UsuarioRegistrado usuario, 
                                  EntityManager em, BilleteraJPADAO billeteraDAO, MovimientoJPADAO movimientoDAO) {
         HttpSession session = req.getSession();
         session.setAttribute("flash_operacion", "RECARGA");
@@ -96,7 +103,7 @@ public class RecargarBilleteraController extends HttpServlet {
             if (!recargado) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_message", "Fallo al recargar la billetera.");
-                return;
+                return false;
             }
 
             Movimiento mov = new Movimiento();
@@ -110,7 +117,7 @@ public class RecargarBilleteraController extends HttpServlet {
             if (!movGuardado) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_message", "Recarga exitosa, pero error al registrar movimiento.");
-                return;
+                return false;
             }
 
             String msg = "La billetera fue recargada con $" + monto + " para usuario " + usuario.getNombre();
@@ -121,9 +128,12 @@ public class RecargarBilleteraController extends HttpServlet {
 
             actualizarSaldoEnSesion(req, usuario, em);
 
+            return true;
+
         } catch (Exception e) {
             session.setAttribute("flash_status", "ERROR");
             session.setAttribute("flash_message", "Error inesperado: " + e.getMessage());
+            return false;
         }
     }
 
@@ -207,7 +217,7 @@ public class RecargarBilleteraController extends HttpServlet {
     }
 
     // Métodos auxiliares simples
-    private Double ingresarMonto(HttpServletRequest req) {
+    private Double ingresarMontoARecargar(HttpServletRequest req) {
         String montoStr = req.getParameter("monto");
         if (montoStr == null) return null;
         try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }

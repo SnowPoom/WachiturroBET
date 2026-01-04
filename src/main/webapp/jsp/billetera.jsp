@@ -147,15 +147,6 @@
                     </div>
                     <form method="post" action="${pageContext.request.contextPath}/recargarBilletera">
                         <div class="form-group">
-                            <label class="label">Usuario (ID)</label>
-                            <% if (sessionUserObj != null) { %>
-                                <div><strong>Usuario:</strong> <%= sessionUserName %></div>
-                                <input type="hidden" name="usuarioId" value="<%= sessionUserId %>" />
-                            <% } else { %>
-                                <input type="number" name="usuarioId" placeholder="1" class="input" required />
-                            <% } %>
-                        </div>
-                        <div class="form-group">
                             <label class="label">Cantidad a Depositar</label>
                             <input type="number" step="0.01" name="monto" placeholder="100" class="input" required />
                         </div>
@@ -175,7 +166,7 @@
                     <form method="post" action="${pageContext.request.contextPath}/retirarBilletera">
                         <div class="form-group">
                             <label class="label">Cantidad a Retirar</label>
-                            <input type="number" name="monto" placeholder="100" class="input" required>
+                            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Disponible: $<%= sessionSaldoObj != null ? sessionSaldoObj : 2450.0 %></div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full">
