@@ -23,7 +23,7 @@ import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
 @WebServlet("/retirarBilletera")
-public class RetiroBilleteraController extends HttpServlet {
+public class RetirarFondosController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
     @Override
@@ -53,8 +53,8 @@ public class RetiroBilleteraController extends HttpServlet {
                 return;
             }
 
-            Double monto = ingresarMonto(req);
-            if (monto == null || !validarMonto(monto)) {
+            Double monto = ingresarMontoARetirar(req);
+            if (monto == null || !esMontoValido(monto)) {
                 enviarError(req, resp, "El monto ingresado no es válido.", operacion);
                 return;
             }
@@ -74,7 +74,7 @@ public class RetiroBilleteraController extends HttpServlet {
         session.setAttribute("flash_operacion", "RETIRO");
         
         try {
-            boolean tieneFondos = billeteraDAO.verificarFondos(usuario, monto);
+            boolean tieneFondos = billeteraDAO.existenFondosValidos(usuario, monto);
             if (!tieneFondos) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_message", "Fondos insuficientes para retirar $" + monto);
@@ -187,13 +187,13 @@ public class RetiroBilleteraController extends HttpServlet {
         }
     }
     
-    private Double ingresarMonto(HttpServletRequest req) {
+    private Double ingresarMontoARetirar(HttpServletRequest req) {
         String montoStr = req.getParameter("monto");
         if (montoStr == null) return null;
         try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }
     }
     
-    private boolean validarMonto(double monto) { return monto > 0; }
+    private boolean esMontoValido(double monto) { return monto > 0; }
 
     private void enviarError(HttpServletRequest req, HttpServletResponse resp, String mensaje, String operacion) throws ServletException, IOException {
         HttpSession session = req.getSession();

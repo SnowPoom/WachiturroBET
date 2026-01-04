@@ -48,7 +48,7 @@ public class BilleteraJPADAO implements IBilleteraDAO {
     }
 
     @Override
-    public boolean verificarFondos(UsuarioRegistrado usuario, double monto) {
+    public boolean existenFondosValidos(UsuarioRegistrado usuario, double monto) {
         if (usuario == null) return false;
         try {
             TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);

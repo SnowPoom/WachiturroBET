@@ -7,7 +7,7 @@ public interface IBilleteraDAO {
     boolean recargarBilletera(double monto, UsuarioRegistrado usuario);
 
     // Verifica si el usuario tiene al menos 'monto' fondos disponibles
-    boolean verificarFondos(UsuarioRegistrado usuario, double monto);
+    boolean existenFondosValidos(UsuarioRegistrado usuario, double monto);
 
     // Retira fondos de la billetera, retorna true si la operación fue exitosa
     boolean retirarFondos(double monto, UsuarioRegistrado usuario);
