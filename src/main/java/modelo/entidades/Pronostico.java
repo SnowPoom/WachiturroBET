@@ -12,19 +12,19 @@ public class Pronostico implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    // FK al evento
-    @Column(name = "id_evento")
-    private int id_evento;
-
     private String descripcion;
 
     private double cuotaActual;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_evento")
+    private Evento evento;
+
     public Pronostico() {}
 
-    public Pronostico(int id, int id_evento, String descripcion, double cuotaActual) {
+    public Pronostico(int id, Evento evento, String descripcion, double cuotaActual) {
         this.id = id;
-        this.id_evento = id_evento;
+        this.evento = evento;
         this.descripcion = descripcion;
         this.cuotaActual = cuotaActual;
     }
@@ -35,14 +35,6 @@ public class Pronostico implements Serializable {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public int getId_evento() {
-        return id_evento;
-    }
-
-    public void setId_evento(int id_evento) {
-        this.id_evento = id_evento;
     }
 
     public String getDescripcion() {
@@ -59,5 +51,13 @@ public class Pronostico implements Serializable {
 
     public void setCuotaActual(double cuotaActual) {
         this.cuotaActual = cuotaActual;
+    }
+
+    public Evento getEvento() {
+        return evento;
+    }
+
+    public void setEvento(Evento evento) {
+        this.evento = evento;
     }
 }

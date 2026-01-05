@@ -14,6 +14,7 @@ import modelo.entidades.TipoMovimiento;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ApuestaJPADAO implements ApuestaDAO {
@@ -25,14 +26,31 @@ public class ApuestaJPADAO implements ApuestaDAO {
 
     @Override
     public List<Apuesta> obtenerApuestas() {
-        TypedQuery<Apuesta> q = em.createQuery("SELECT a FROM Apuesta a", Apuesta.class);
+        TypedQuery<Apuesta> q = em.createQuery("SELECT a FROM Apuesta a ORDER BY a.fecha DESC", Apuesta.class);
         return q.getResultList();
     }
 
     @Override
-    public List<Apuesta> filtrar() {
-        // Implementación placeholder: retorna todas
-        return obtenerApuestas();
+    public List<Apuesta> filtrar(LocalDateTime fechaInicio, LocalDateTime fechaFin, String estado) {
+        StringBuilder sb = new StringBuilder("SELECT a FROM Apuesta a WHERE 1=1");
+        if (fechaInicio != null) sb.append(" AND a.fecha >= :fInicio");
+        if (fechaFin != null) sb.append(" AND a.fecha <= :fFin");
+        if (estado != null && !estado.trim().isEmpty()) sb.append(" AND a.estado = :estado");
+        sb.append(" ORDER BY a.fecha DESC");
+
+        TypedQuery<Apuesta> q = em.createQuery(sb.toString(), Apuesta.class);
+        if (fechaInicio != null) q.setParameter("fInicio", fechaInicio);
+        if (fechaFin != null) q.setParameter("fFin", fechaFin);
+        if (estado != null && !estado.trim().isEmpty()) {
+            try {
+                EstadoApuesta e = EstadoApuesta.valueOf(estado);
+                q.setParameter("estado", e);
+            } catch (IllegalArgumentException iae) {
+                // estado inválido -> devolver vacío
+                return new ArrayList<>();
+            }
+        }
+        return q.getResultList();
     }
 
     @Override
@@ -59,9 +77,12 @@ public class ApuestaJPADAO implements ApuestaDAO {
             Apuesta a = new Apuesta();
             a.setIdUsuario(usuario.getId());
             if (pronostico != null) {
-                a.setIdEvento(pronostico.getId_evento());
+                a.setPronostico(pronostico);
                 a.setCuotaRegistrada(pronostico.getCuotaActual());
-                a.setIdPronostico(pronostico.getId());
+                // Also set idEvento via the pronostico's evento if available
+                if (pronostico.getEvento() != null) {
+                    // nothing to set; relation exists through pronostico
+                }
             }
             a.setMonto(monto);
             a.setEstado(EstadoApuesta.PENDIENTE);
