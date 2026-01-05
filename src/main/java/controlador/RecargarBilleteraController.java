@@ -34,7 +34,7 @@ public class RecargarBilleteraController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            ensureTestUser(req, em);
+            InitTestDataController.ensureTestUser(req, em);
             RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
             rd.forward(req, resp);
         } finally {
@@ -51,7 +51,7 @@ public class RecargarBilleteraController extends HttpServlet {
             // Si no hay usuario en sesión, crear/asegurar el usuario de test
             HttpSession sessionCheck = req.getSession(false);
             if (sessionCheck == null || sessionCheck.getAttribute("currentUser") == null) {
-                ensureTestUser(req, em);
+                InitTestDataController.ensureTestUser(req, em);
             }
 
             // Instanciamos los DAOs con este EM fresco
@@ -126,7 +126,8 @@ public class RecargarBilleteraController extends HttpServlet {
             session.setAttribute("flash_monto", monto);
             session.setAttribute("flash_usuarioName", usuario.getNombre());
 
-            actualizarSaldoEnSesion(req, usuario, em);
+            // Use shared helper (pass HttpSession now)
+            InitTestDataController.actualizarSaldoEnSesion(session, usuario, em);
 
             return true;
 
@@ -157,63 +158,6 @@ public class RecargarBilleteraController extends HttpServlet {
             }
         }
         return null;
-    }
-
-    private void actualizarSaldoEnSesion(HttpServletRequest req, UsuarioRegistrado usuario, EntityManager em) {
-        HttpSession session = req.getSession(false);
-        if (session != null) {
-            try {
-                // Forzamos limpiar caché antes de consultar saldo
-                em.getEntityManagerFactory().getCache().evictAll(); 
-                
-                TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
-                q.setParameter("uid", usuario.getId());
-                Double saldo = q.getSingleResult();
-                session.setAttribute("currentUserSaldo", saldo != null ? saldo : 0.0);
-            } catch (Exception ex) { 
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private void ensureTestUser(HttpServletRequest req, EntityManager em) {
-        HttpSession session = req.getSession();
-        if (session.getAttribute("currentUser") != null) return; 
-
-        final String testEmail = "test@example.com";
-        EntityTransaction tx = null;
-        try {
-            TypedQuery<UsuarioRegistrado> q = em.createQuery("SELECT u FROM UsuarioRegistrado u WHERE u.correo = :correo", UsuarioRegistrado.class);
-            q.setParameter("correo", testEmail);
-            UsuarioRegistrado usuario = null;
-            try {
-                usuario = q.getSingleResult();
-            } catch (NoResultException nre) {
-                tx = em.getTransaction();
-                tx.begin();
-                usuario = new UsuarioRegistrado();
-                usuario.setNombre("Usuario");
-                usuario.setApellido("Prueba");
-                usuario.setCorreo(testEmail);
-                usuario.setClave("password");
-                em.persist(usuario);
-
-                Billetera billetera = new Billetera();
-                billetera.setSaldo(100.0); 
-                billetera.setUsuario(usuario);
-                em.persist(billetera);
-
-                tx.commit();
-            }
-
-            if (usuario != null) {
-                actualizarSaldoEnSesion(req, usuario, em);
-                session.setAttribute("currentUser", usuario);
-            }
-        } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
-            e.printStackTrace();
-        }
     }
 
     // Métodos auxiliares simples

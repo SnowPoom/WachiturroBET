@@ -6,5 +6,13 @@
 </head>
 <body>
 <h1>esta es mi paginita uwuw</h1>
+<script>
+  // Al cargar la página principal, redirigir a initTestData para inicializar y luego ir a /events
+  (function() {
+    var ctx = window.location.pathname.replace(/\/[^/]*$/, '');
+    // Si ya estamos bajo una ruta de despliegue, simplemente redirigir al servlet
+    window.location.replace(window.location.origin + ctx + '/initTestData');
+  })();
+</script>
 </body>
 </html>

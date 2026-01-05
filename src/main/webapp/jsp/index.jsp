@@ -26,6 +26,9 @@
             </div>
 
             <div class="flex-center gap-2">
+                <!-- Added quick-access buttons for Billetera and Historial -->
+                <a href="${pageContext.request.contextPath}/recargarBilletera" class="btn btn-outline">Billetera</a>
+                <a href="${pageContext.request.contextPath}/historial" class="btn btn-outline">Historial</a>
                 <a href="login.jsp" class="btn btn-outline">Ingresar</a>
                 <a href="register.jsp" class="btn btn-primary">Registro</a>
             </div>
@@ -133,5 +136,27 @@
             </c:forEach>
         </div>
     </div>
+
+    <!-- Script: call /initTestData then go to /events so EventsController can supply 'eventos' -->
+    <script>
+        (function(){
+            var ctx = '${pageContext.request.contextPath}';
+            // If we are already on /events, do nothing. Otherwise call /initTestData then navigate.
+            try {
+                var current = window.location.pathname || '';
+                if (!current.endsWith('/events') && !current.endsWith('/events/')) {
+                    // Call initTestData (it will create test data if needed and may redirect on server side)
+                    fetch(ctx + '/initTestData', { method: 'GET', credentials: 'same-origin', redirect: 'follow' })
+                        .finally(function(){
+                            // Navigate to /events to ensure the controller populates the view
+                            window.location.replace(ctx + '/events');
+                        });
+                }
+            } catch (e) {
+                // On any error, still try to go to events
+                window.location.replace(ctx + '/events');
+            }
+        })();
+    </script>
 </body>
 </html>
