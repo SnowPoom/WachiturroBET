@@ -3,13 +3,17 @@
 	<persistence-unit name="WachiturroBET">
 	<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 		<class>modelo.entidades.Usuario</class>
+		<class>modelo.entidades.Administrador</class>
 		<class>modelo.entidades.UsuarioRegistrado</class>
 		<class>modelo.entidades.Billetera</class>
 		<class>modelo.entidades.Movimiento</class>
 		<class>modelo.entidades.Apuesta</class>
+		<class>modelo.entidades.Recarga</class>
+		<class>modelo.entidades.Retiro</class>
+		
 		<class>modelo.entidades.Evento</class>
 		<class>modelo.entidades.Pronostico</class>
-		<properties>
+		<properties>	
 			<property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/wachiturrobet"/>
 			<property name="jakarta.persistence.jdbc.user" value="root"/>
 			<property name="jakarta.persistence.jdbc.password" value=""/>

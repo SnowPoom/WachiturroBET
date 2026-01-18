@@ -3,8 +3,7 @@ package controlador;
 import modelo.dao.JPAUtil;
 import modelo.dao.jpa.BilleteraJPADAO;
 import modelo.dao.jpa.MovimientoJPADAO;
-import modelo.entidades.Billetera;
-import modelo.entidades.Movimiento;
+import modelo.entidades.Recarga;
 import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
@@ -17,7 +16,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @WebServlet("/recargarBilletera")
 public class RecargarBilleteraController extends HttpServlet {
@@ -79,9 +80,6 @@ public class RecargarBilleteraController extends HttpServlet {
         // Abrimos EM para toda la transacción de este método
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            // Aseguramos que exista un usuario de prueba en sesión si no hay uno (evita fallo cuando la sesión es nueva)
-            InitTestDataController.ensureTestUser(req, em);
-
             UsuarioRegistrado usuario = obtenerUsuarioDeSesionOParametro(req, em);
             
             if (usuario == null) {
@@ -91,10 +89,25 @@ public class RecargarBilleteraController extends HttpServlet {
 
             // Obtener monto del request
             String montoStr = req.getParameter("monto");
+            if (montoStr == null) {
+                this.presentarErrorAlRecargar(req, resp, "Formato de monto inválido.");
+                return;
+            }
+
+            montoStr = montoStr.trim().replace(',', '.');
+            // Validar que tenga máxima 2 decimales y sea numérico positivo
+            if (!montoStr.matches("^\\d+(\\.\\d{1,2})?$") ) {
+                this.presentarErrorAlRecargar(req, resp, "El monto debe tener como máximo 2 decimales y ser positivo.");
+                return;
+            }
+
             double monto = 0;
             try {
-                monto = Double.parseDouble(montoStr);
-            } catch (NumberFormatException | NullPointerException e) {
+                BigDecimal bd = new BigDecimal(montoStr);
+                // Normalizar a 2 decimales
+                bd = bd.setScale(2, RoundingMode.HALF_UP);
+                monto = bd.doubleValue();
+            } catch (NumberFormatException | ArithmeticException e) {
                 this.presentarErrorAlRecargar(req, resp, "Formato de monto inválido.");
                 return;
             }
@@ -111,8 +124,7 @@ public class RecargarBilleteraController extends HttpServlet {
 
     // 2.1. procesarRecarga(): Orquesta las validaciones y llamadas a los DAOs
     private void procesarRecarga(double monto, UsuarioRegistrado usuario, HttpServletRequest req, HttpServletResponse resp, EntityManager em) throws IOException, ServletException {
-        
-    	BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
+        BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
         // Paso 2.2: validarMonto
         if (!billeteraDAO.validarMonto(monto)) {
             // Paso 2.7 (Alternativo): Presentar error
@@ -129,11 +141,11 @@ public class RecargarBilleteraController extends HttpServlet {
 
             if (recargaExitosa) {
                 // Paso 2.5: movimientoDAO.crearMovimiento
-                Movimiento mov = new Movimiento();
+                Recarga mov = new Recarga();
                 mov.setUsuario(usuario);
                 mov.setTipo(TipoMovimiento.RECARGA);
                 mov.setMonto(monto);
-                mov.setFecha(LocalDate.now());
+                mov.setFecha(LocalDateTime.now());
                 
                 boolean movExitoso = movimientoDAO.crearMovimiento(mov);
 
@@ -155,6 +167,7 @@ public class RecargarBilleteraController extends HttpServlet {
             this.presentarErrorAlRecargar(req, resp, "Error inesperado: " + e.getMessage());
         }
     }
+
 
     // 2.6. presentarMensajeConfirmacionRecargar(): Final feliz
     private void presentarMensajeConfirmacionRecargar(HttpServletRequest req, HttpServletResponse resp, double monto, String nombreUsuario) throws IOException {

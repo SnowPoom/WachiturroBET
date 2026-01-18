@@ -41,7 +41,7 @@
                 <h3 class="card-title" style="margin:0;">Listado de Eventos</h3>
                 
                 <div class="flex-center gap-2">
-                    <a href="NuevoEvento.jsp" class="btn btn-primary">
+                    <a href="${pageContext.request.contextPath}/crearEvento" class="btn btn-primary">
                         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                         Crear Evento
                     </a>
@@ -65,30 +65,33 @@
                         <tbody>
                             <% 
                                 List<Evento> lista = (List<Evento>) request.getAttribute("listaEventos");
-                                if(lista != null && !lista.isEmpty()) { 
-                                    for(Evento e : lista) { 
+                                if (lista != null && !lista.isEmpty()) {
+                                    for (Evento e : lista) {
                             %>
                             <tr>
                                 <td><input type="radio" name="idEvento" value="<%= e.getId() %>" class="radio-custom" required></td>
                                 <td style="color: white; font-weight: 500;"><%= e.getNombre() %></td>
-                                <td><%= (e.getFecha() != null) ? e.getFecha().toString().replace("T", " ") : "Sin fecha" %></td>
-                                <td><%= (e.getCategoria() != null) ? e.getCategoria().name() : "Sin categoría" %></td>
+                                <td><%= e.getFecha() != null ? e.getFecha().toString().replace('T', ' ') : "-" %></td>
+                                <td><%= e.getCategoria() != null ? e.getCategoria().name() : "-" %></td>
                                 <td>
-                                    <% if(e.isEstado()) { %>
-                                        <span class="badge badge-green">Abierto</span>
-                                    <% } else { %>
-                                        <span class="badge badge-purple">Cerrado</span>
-                                    <% } %>
+                                    <% 
+    // Usamos el booleano real de la base de datos
+    // Si e.isEstado() es true, está Abierto. Si es false, está Cerrado.
+    String estadoLabel = e.isEstado() ? "Abierto" : "Cerrado";
+    
+    // Opcional: Si quieres mantener el color verde/morado
+    String badgeClass = e.isEstado() ? "badge-green" : "badge-purple";
+%>
+<span class="badge <%= badgeClass %>"><%= estadoLabel %></span>
                                 </td>
                             </tr>
-                            <% 
-                                    } 
-                                } else {
-                            %>
+                            <%      }
+                                } else { %>
                             <tr>
-                                <td colspan="5" class="text-center" style="padding: 2rem;">No hay eventos registrados.</td>
+                                <td colspan="5">No hay eventos registrados.</td>
                             </tr>
                             <% } %>
+                        </tbody>
                     </table>
                 </div>
                 
@@ -118,10 +121,6 @@
                 return;
             }
 
-            // Aquí rediriges al controlador adecuado. 
-            // Podrías usar formaction en los botones si fuera HTML5 puro, pero JS es más seguro para validación.
-            // Ajusta la URL según tu ruteo (ej: "GestionarPronosticos?id=" + selected.value)
-            
             if (controller === 'FinalizarEventoController') {
                 form.action = "${pageContext.request.contextPath}/finalizarEvento"; // URL Controller Finalizar
             } else {

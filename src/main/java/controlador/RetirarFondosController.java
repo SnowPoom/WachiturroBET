@@ -18,7 +18,7 @@ import modelo.dao.JPAUtil;
 import modelo.dao.jpa.BilleteraJPADAO;
 import modelo.dao.jpa.MovimientoJPADAO;
 import modelo.entidades.Billetera;
-import modelo.entidades.Movimiento;
+import modelo.entidades.Retiro;
 import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
@@ -124,11 +124,11 @@ public class RetirarFondosController extends HttpServlet {
             }
 
             // Flecha 2.4: crearMovimiento(...)
-            Movimiento mov = new Movimiento();
+            Retiro mov = new Retiro();
             mov.setUsuario(usuario);
             mov.setTipo(TipoMovimiento.RETIRO);
             mov.setMonto(monto);
-            mov.setFecha(LocalDate.now());
+            mov.setFecha(java.time.LocalDateTime.now());
 
             if (!movimientoDAO.crearMovimiento(mov)) {
                 presentarMensajeErrorRetirar(req, resp, "Error al registrar el historial.");

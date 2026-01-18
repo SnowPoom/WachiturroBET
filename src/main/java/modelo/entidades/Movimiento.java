@@ -1,12 +1,14 @@
 package modelo.entidades;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "movimientos")
-public class Movimiento  implements Serializable {
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "movimiento_tipo", discriminatorType = DiscriminatorType.STRING)
+public abstract class Movimiento implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -27,11 +29,11 @@ public class Movimiento  implements Serializable {
     private double monto;
 
     @Column(name = "fecha")
-    private LocalDate fecha;
+    private LocalDateTime fecha;
 
     public Movimiento() {}
 
-    public Movimiento(int id, UsuarioRegistrado usuario, TipoMovimiento tipo, double monto, LocalDate fecha) {
+    public Movimiento(int id, UsuarioRegistrado usuario, TipoMovimiento tipo, double monto, LocalDateTime fecha) {
         this.id = id;
         this.usuario = usuario;
         this.tipo = tipo;
@@ -71,11 +73,11 @@ public class Movimiento  implements Serializable {
         this.monto = monto;
     }
 
-    public LocalDate getFecha() {
+    public LocalDateTime getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
 

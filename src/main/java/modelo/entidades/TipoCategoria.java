@@ -1,7 +1,7 @@
 package modelo.entidades;
 
 public enum TipoCategoria {
-    DEPORTE,
+    DEPORTES,
     ESPORTS,
     ESPECIAL
 }
