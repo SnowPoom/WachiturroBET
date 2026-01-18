@@ -9,11 +9,8 @@ import modelo.entidades.Pronostico;
 import modelo.entidades.UsuarioRegistrado;
 import modelo.entidades.EstadoApuesta;
 import modelo.entidades.Billetera;
-import modelo.entidades.Movimiento;
-import modelo.entidades.TipoMovimiento;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,30 +70,18 @@ public class ApuestaJPADAO implements ApuestaDAO {
             billetera.setSaldo(billetera.getSaldo() - monto);
             em.merge(billetera);
 
-            // Crear la apuesta
+            // Crear la apuesta (Apuesta ahora extiende Movimiento)
             Apuesta a = new Apuesta();
             a.setIdUsuario(usuario.getId());
             if (pronostico != null) {
                 a.setPronostico(pronostico);
                 a.setCuotaRegistrada(pronostico.getCuotaActual());
-                // Also set idEvento via the pronostico's evento if available
-                if (pronostico.getEvento() != null) {
-                    // nothing to set; relation exists through pronostico
-                }
             }
             a.setMonto(monto);
             a.setEstado(EstadoApuesta.PENDIENTE);
             a.setFecha(LocalDateTime.now());
 
             em.persist(a);
-
-            // Registrar movimiento de tipo APUESTA
-            Movimiento mov = new Movimiento();
-            mov.setUsuario(usuario);
-            mov.setTipo(TipoMovimiento.APUESTA);
-            mov.setMonto(monto);
-            mov.setFecha(LocalDate.now());
-            em.persist(mov);
 
             tx.commit();
         } catch (IllegalStateException ise) {

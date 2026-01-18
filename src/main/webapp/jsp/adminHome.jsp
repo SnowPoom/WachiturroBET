@@ -41,7 +41,7 @@
                 <h3 class="card-title" style="margin:0;">Listado de Eventos</h3>
                 
                 <div class="flex-center gap-2">
-                    <a href="NuevoEvento.jsp" class="btn btn-primary">
+                    <a href="${pageContext.request.contextPath}/crearEvento" class="btn btn-primary">
                         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                         Crear Evento
                     </a>
@@ -75,16 +75,14 @@
                                 <td><%= e.getCategoria() != null ? e.getCategoria().name() : "-" %></td>
                                 <td>
                                     <% 
-                                        String estadoLabel = "Cerrado";
-                                        try {
-                                            if (e.getFecha() != null && e.getFecha().isAfter(java.time.LocalDateTime.now())) {
-                                                estadoLabel = "Abierto";
-                                            }
-                                        } catch (Exception ex) {
-                                            // ignore
-                                        }
-                                    %>
-                                    <span class="badge <%= "Abierto".equals(estadoLabel) ? "badge-green" : "badge-purple" %>"><%= estadoLabel %></span>
+    // Usamos el booleano real de la base de datos
+    // Si e.isEstado() es true, está Abierto. Si es false, está Cerrado.
+    String estadoLabel = e.isEstado() ? "Abierto" : "Cerrado";
+    
+    // Opcional: Si quieres mantener el color verde/morado
+    String badgeClass = e.isEstado() ? "badge-green" : "badge-purple";
+%>
+<span class="badge <%= badgeClass %>"><%= estadoLabel %></span>
                                 </td>
                             </tr>
                             <%      }

@@ -18,6 +18,7 @@ public class Evento {
 
     // Añadimos descripción según la especificación
     private String descripcion;
+    private boolean estado;
 
     public Evento() {}
 
@@ -67,4 +68,12 @@ public class Evento {
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
+
+	public boolean isEstado() {
+		return estado;
+	}
+
+	public void setEstado(boolean estado) {
+		this.estado = estado;
+	}
 }

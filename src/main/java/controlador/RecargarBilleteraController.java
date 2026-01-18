@@ -3,7 +3,7 @@ package controlador;
 import modelo.dao.JPAUtil;
 import modelo.dao.jpa.BilleteraJPADAO;
 import modelo.dao.jpa.MovimientoJPADAO;
-import modelo.entidades.Movimiento;
+import modelo.entidades.Recarga;
 import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -141,11 +141,11 @@ public class RecargarBilleteraController extends HttpServlet {
 
             if (recargaExitosa) {
                 // Paso 2.5: movimientoDAO.crearMovimiento
-                Movimiento mov = new Recarga();
+                Recarga mov = new Recarga();
                 mov.setUsuario(usuario);
                 mov.setTipo(TipoMovimiento.RECARGA);
                 mov.setMonto(monto);
-                mov.setFecha(LocalDate.now());
+                mov.setFecha(LocalDateTime.now());
                 
                 boolean movExitoso = movimientoDAO.crearMovimiento(mov);
 
