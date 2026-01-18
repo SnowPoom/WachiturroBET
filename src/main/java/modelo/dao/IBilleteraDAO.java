@@ -11,4 +11,6 @@ public interface IBilleteraDAO {
 
     // Retira fondos de la billetera, retorna true si la operación fue exitosa
     boolean retirarFondos(double monto, UsuarioRegistrado usuario);
+    // En IBilleteraDAO.java
+    public boolean validarMonto(double monto);
 }
