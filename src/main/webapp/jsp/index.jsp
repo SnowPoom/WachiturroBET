@@ -12,7 +12,7 @@
 
     <header class="navbar">
         <div class="container nav-content">
-            <a href="index.jsp" class="logo">
+            <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar" class="logo">
                 <div class="logo-icon"> <img src="${pageContext.request.contextPath}/jsp/image.png" alt="icon"></div>
                 <span>WachiturroBet</span>
             </a>
@@ -26,11 +26,16 @@
             </div>
 
             <div class="flex-center gap-2">
-                <!-- Added quick-access buttons for Billetera and Historial -->
                 <a href="${pageContext.request.contextPath}/recargarBilletera" class="btn btn-outline">Billetera</a>
                 <a href="${pageContext.request.contextPath}/historial" class="btn btn-outline">Historial</a>
-                <a href="login.jsp" class="btn btn-outline">Ingresar</a>
-                <a href="register.jsp" class="btn btn-primary">Registro</a>
+                
+                <% if (session.getAttribute("currentUser") == null) { %>
+                    <a href="jsp/login.jsp" class="btn btn-outline">Ingresar</a>
+                    <a href="jsp/register.jsp" class="btn btn-primary">Registro</a>
+                <% } else { %>
+                     <span class="text-purple">Hola, ${currentUser.nombre}</span>
+                     <a href="${pageContext.request.contextPath}/LogoutController" class="btn btn-outline">Salir</a>
+                <% } %>
             </div>
         </div>
     </header>
@@ -51,10 +56,12 @@
                         <h3 class="card-title" style="font-size: 1.25rem;">¡Únete!</h3>
                         <p class="card-desc">Crea tu cuenta y comienza a ganar hoy mismo</p>
                     </div>
+                    <% if (session.getAttribute("currentUser") == null) { %>
                     <div class="flex-center gap-2">
-                        <a href="login.jsp" class="btn btn-outline">Iniciar Sesión</a>
-                        <a href="register.jsp" class="btn btn-primary">Registrarse Ahora</a>
+                        <a href="jsp/login.jsp" class="btn btn-outline">Iniciar Sesión</a>
+                        <a href="jsp/register.jsp" class="btn btn-primary">Registrarse Ahora</a>
                     </div>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -116,47 +123,44 @@
                         </div>
                         <h3 class="card-title">${evento.nombre}</h3>
                         <p class="card-desc">${evento.descripcion}</p>
-                        <label  class="card-desc">Monto:</label>
-                        <input type="number" name="monto" class="input margin" placeholder="0.00" style="height:2.2rem;">
                     </div>
+                    
                     <div class="card-content">
-                        
                         <div class="grid-2" style="gap: 0.5rem;">
-                            <form action="${pageContext.request.contextPath}/apuesta" method="get">
-                                <input type="hidden" name="action" value="seleccionarEvento" />
-                                <input type="hidden" name="idEvento" value="${evento.id}" />
-                                <button type="submit" class="btn btn-outline" style="flex-direction: column; padding: 1.5rem;">
-                                    <span>Ver</span>
-                                    <span class="text-purple font-bold">Ver detalles</span>
-                                </button>
-                            </form>
+                            <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=seleccionarEvento&id=${evento.id}" 
+                               class="btn btn-outline" 
+                               style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%;">
+                                
+                                <span>Ver</span>
+                                <span class="text-purple font-bold">Ver detalles y cuotas</span>
+                            </a>
                         </div>
                     </div>
                 </div>
             </c:forEach>
+            
+            <c:if test="${empty eventos}">
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-content text-center">
+                        <h3>No hay eventos disponibles por el momento.</h3>
+                        <p>Vuelve más tarde para ver nuevos partidos.</p>
+                    </div>
+                </div>
+            </c:if>
         </div>
     </div>
-
-    <!-- Script: call /initTestData then go to /events so EventsController can supply 'eventos' -->
     <script>
-        (function(){
-            var ctx = '${pageContext.request.contextPath}';
-            // If we are already on /events, do nothing. Otherwise call /initTestData then navigate.
-            try {
-                var current = window.location.pathname || '';
-                if (!current.endsWith('/events') && !current.endsWith('/events/')) {
-                    // Call initTestData (it will create test data if needed and may redirect on server side)
-                    fetch(ctx + '/initTestData', { method: 'GET', credentials: 'same-origin', redirect: 'follow' })
-                        .finally(function(){
-                            // Navigate to /events to ensure the controller populates the view
-                            window.location.replace(ctx + '/events');
-                        });
-                }
-            } catch (e) {
-                // On any error, still try to go to events
-                window.location.replace(ctx + '/events');
-            }
-        })();
-    </script>
+    (function() {
+        // Solo intentamos inicializar si no estamos ya en el proceso
+        // Hacemos una petición silenciosa (fetch)
+        fetch('${pageContext.request.contextPath}/initTestData')
+            .then(response => {
+                console.log("Datos verificados/inicializados");
+                // Opcional: Recargar si la lista estaba vacía
+            })
+            .catch(error => console.log("Error inicializando datos", error));
+    })();
+</script>
+
 </body>
 </html>

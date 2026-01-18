@@ -19,7 +19,6 @@ import modelo.entidades.Billetera;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @WebServlet("/initTestData")
 public class InitTestDataController extends HttpServlet {
@@ -30,74 +29,113 @@ public class InitTestDataController extends HttpServlet {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = null;
         try {
-            // Verificar si ya existen eventos
+            // 1. Verificar si ya existen eventos
             TypedQuery<Long> q = em.createQuery("SELECT COUNT(e) FROM Evento e", Long.class);
             Long count = q.getSingleResult();
+            
+            // IMPORTANTE: Si ya tienes datos, NO creamos nada nuevo para no duplicar.
+            // Si quieres ver los nuevos, borra tu base de datos o cambia esta condición.
             if (count != null && count > 0) {
-                // Asegurarnos también de que el usuario de prueba esté en sesión
                 ensureTestUser(req, em);
-                // Ir a /events en lugar de la vista JSP
-                resp.sendRedirect(req.getContextPath() + "/events");
+                resp.sendRedirect(req.getContextPath() + "/ListarEventosController?ruta=entrar");
                 return;
             }
 
             tx = em.getTransaction();
             tx.begin();
 
-            Evento ev = new Evento();
-            ev.setNombre("Partido Amistoso: Selección A vs Selección B");
-            ev.setFecha(LocalDateTime.now().plusDays(1));
-            ev.setCategoria(TipoCategoria.DEPORTE);
-            ev.setDescripcion("Encuentro amistoso entre Selección A y Selección B. No te lo pierdas.");
+            System.out.println("--- INICIANDO CREACIÓN DE DATOS DE PRUEBA ---");
 
-            em.persist(ev);
-            // Asegurarnos de que el ID se genere antes de crear pronósticos que referencien id_evento
-            em.flush();
+            // --- EVENTO 1: FÚTBOL (El Clásico) ---
+            crearEventoCompleto(em, 
+                "Real Madrid vs FC Barcelona", 
+                "La Liga - Jornada 32. El clásico español decisivo por el título.",
+                LocalDateTime.now().plusDays(2), // Juegan en 2 días
+                TipoCategoria.DEPORTE,
+                new Object[][] {
+                    {"Gana Real Madrid", 2.15},
+                    {"Empate", 3.40},
+                    {"Gana Barcelona", 3.00}
+                }
+            );
 
-            Pronostico p1 = new Pronostico();
-            p1.setDescripcion("Gana Selección A");
-            p1.setCuotaActual(1.85);
-            // Asociar correctamente el evento al pronóstico
-            p1.setEvento(ev);
-            em.persist(p1);
+            // --- EVENTO 2: E-SPORTS (League of Legends) ---
+            crearEventoCompleto(em, 
+                "T1 vs Gen.G - Worlds Final", 
+                "Gran Final del Campeonato Mundial de League of Legends 2026.",
+                LocalDateTime.now().plusDays(5),
+                TipoCategoria.ESPORTS,
+                new Object[][] {
+                    {"Gana T1 (Faker)", 1.65},
+                    {"Gana Gen.G", 2.20}
+                }
+            );
 
-            Pronostico p2 = new Pronostico();
-            p2.setDescripcion("Gana Selección B");
-            p2.setCuotaActual(2.10);
-            // Asociar correctamente el evento al pronóstico
-            p2.setEvento(ev);
-            em.persist(p2);
-
-            Pronostico p3 = new Pronostico();
-            p3.setDescripcion("Empate");
-            p3.setCuotaActual(3.25);
-            // Asociar correctamente el evento al pronóstico
-            p3.setEvento(ev);
-            em.persist(p3);
+            // --- EVENTO 3: TENIS (Grand Slam) ---
+            crearEventoCompleto(em, 
+                "Alcaraz vs Sinner", 
+                "Final de Roland Garros. Duelo de la nueva generación.",
+                LocalDateTime.now().plusDays(1),
+                TipoCategoria.DEPORTE,
+                new Object[][] {
+                    {"Gana Alcaraz", 1.85},
+                    {"Gana Sinner", 1.85}, // Cuotas iguales, partido reñido
+                    {"Más de 3.5 Sets", 1.40}
+                }
+            );
 
             tx.commit();
+            System.out.println("--- DATOS CREADOS CORRECTAMENTE ---");
 
-            // Aseguramos también el usuario de prueba en sesión después de crear los datos
+            // Aseguramos usuario de prueba
             ensureTestUser(req, em);
 
-            // Ir a /events
-            resp.sendRedirect(req.getContextPath() + "/events");
+            // Redirigir al nuevo Ruteador
+            resp.sendRedirect(req.getContextPath() + "/ListarEventosController?ruta=entrar");
+            
         } catch (Exception e) {
             if (tx != null && tx.isActive()) tx.rollback();
             e.printStackTrace();
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error creando datos de prueba: " + e.getMessage());
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error creando datos: " + e.getMessage());
         } finally {
-            em.close();
+            if (em != null && em.isOpen()) em.close();
         }
     }
 
-    // Moved helper: ensureTestUser (public static so it can be reused by other controllers)
+    /**
+     * Método auxiliar para crear un evento y sus pronósticos en una sola llamada.
+     * Evita repetir código y hace el doGet más legible.
+     */
+    private void crearEventoCompleto(EntityManager em, String nombre, String desc, LocalDateTime fecha, TipoCategoria cat, Object[][] datosPronosticos) {
+        // 1. Crear y persistir el Evento
+        Evento ev = new Evento();
+        ev.setNombre(nombre);
+        ev.setDescripcion(desc);
+        ev.setFecha(fecha);
+        ev.setCategoria(cat);
+        em.persist(ev);
+        
+        // Flush para asegurar que el evento tenga ID antes de asignarlo a los pronósticos
+        em.flush(); 
+
+        // 2. Iterar y crear los pronósticos
+        for (Object[] datos : datosPronosticos) {
+            String descripcionPronostico = (String) datos[0];
+            Double cuota = (Double) datos[1];
+
+            Pronostico p = new Pronostico();
+            p.setDescripcion(descripcionPronostico);
+            p.setCuotaActual(cuota);
+            p.setEvento(ev); // Relación bidireccional
+            em.persist(p);
+        }
+    }
+
+    // --- MÉTODOS DE USUARIO DE PRUEBA (Sin cambios, solo copiados para mantener funcionalidad) ---
+
     public static void ensureTestUser(HttpServletRequest req, EntityManager em) {
         HttpSession session = req.getSession(true);
-        if (session.getAttribute("currentUser") != null) {
-            System.out.println("[InitTestDataController] ensureTestUser: currentUser ya en sesión");
-            return;
-        }
+        if (session.getAttribute("currentUser") != null) return;
 
         final String testEmail = "test@example.com";
         EntityTransaction tx = null;
@@ -107,9 +145,7 @@ public class InitTestDataController extends HttpServlet {
             q.setParameter("correo", testEmail);
             try {
                 usuario = q.getSingleResult();
-                System.out.println("[InitTestDataController] ensureTestUser: usuario existente id=" + usuario.getId());
             } catch (NoResultException nre) {
-                // Crear usuario y billetera de prueba
                 tx = em.getTransaction();
                 tx.begin();
                 usuario = new UsuarioRegistrado();
@@ -120,37 +156,18 @@ public class InitTestDataController extends HttpServlet {
                 em.persist(usuario);
 
                 Billetera billetera = new Billetera();
-                billetera.setSaldo(100.0);
+                billetera.setSaldo(5000.0); // Le subí el saldo para que pruebes apostar harto
                 billetera.setUsuario(usuario);
                 em.persist(billetera);
-
-                // Forzar asignación de IDs antes del commit para mayor seguridad
                 em.flush();
-                System.out.println("[InitTestDataController] ensureTestUser: usuario creado provisional id=" + usuario.getId());
-
                 tx.commit();
-                System.out.println("[InitTestDataController] ensureTestUser: commit de creación realizado");
             }
 
             if (usuario != null) {
-                // Reload managed entity from this EntityManager to avoid detached instances in session
                 UsuarioRegistrado managedUser = em.find(UsuarioRegistrado.class, usuario.getId());
-                if (managedUser == null) {
-                    // If still null (very unlikely), try to refresh by querying
-                    TypedQuery<UsuarioRegistrado> q2 = em.createQuery("SELECT u FROM UsuarioRegistrado u WHERE u.correo = :correo", UsuarioRegistrado.class);
-                    q2.setParameter("correo", testEmail);
-                    try { managedUser = q2.getSingleResult(); } catch (Exception ex) { managedUser = usuario; }
-                }
-
-                // Update saldo en sesión and set user in session using the same HttpSession
                 actualizarSaldoEnSesion(session, managedUser, em);
                 session.setAttribute("currentUser", managedUser);
-                // Also store the id and timestamp to help debugging and to avoid relying solely on entity serialization
                 session.setAttribute("currentUserId", managedUser.getId());
-                session.setAttribute("currentUserSetAt", System.currentTimeMillis());
-
-                System.out.println("[InitTestDataController] ensureTestUser: usuario en sesión con id=" + managedUser.getId());
-                System.out.println("[InitTestDataController] ensureTestUser: session attributes -> currentUser=" + (session.getAttribute("currentUser")!=null) + ", currentUserId=" + session.getAttribute("currentUserId"));
             }
         } catch (Exception e) {
             if (tx != null && tx.isActive()) tx.rollback();
@@ -158,22 +175,17 @@ public class InitTestDataController extends HttpServlet {
         }
     }
 
-    // Moved helper: actualizarSaldoEnSesion (now accepts HttpSession explicitly)
     public static void actualizarSaldoEnSesion(HttpSession session, UsuarioRegistrado usuario, EntityManager em) {
         if (session != null) {
             try {
-                // Forzamos limpiar caché antes de consultar saldo
                 em.getEntityManagerFactory().getCache().evictAll();
-
                 TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
                 q.setParameter("uid", usuario.getId());
                 Double saldo = q.getSingleResult();
                 session.setAttribute("currentUserSaldo", saldo != null ? saldo : 0.0);
-                System.out.println("[InitTestDataController] actualizarSaldoEnSesion: saldo=" + saldo);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
-
 }

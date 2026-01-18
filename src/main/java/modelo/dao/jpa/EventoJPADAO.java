@@ -28,8 +28,6 @@ public class EventoJPADAO implements EventoDAO {
     }
     
     public List<Evento> obtenerEventosDisponibles() {
-        // Esto hace que sea DINÁMICO. Trae todo lo que esté en la BD.
-        // Si el admin agrega un evento hoy, mañana aparecerá aquí automáticamente.
         String jpql = "SELECT e FROM Evento e ORDER BY e.fecha ASC";
         TypedQuery<Evento> query = em.createQuery(jpql, Evento.class);
         return query.getResultList();

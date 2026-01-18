@@ -43,7 +43,7 @@
 
     <header class="navbar">
         <div class="container nav-content">
-            <a href="index.jsp" class="logo">
+            <a href="ListarEventosController?ruta=entrar" class="logo">
                 <div class="logo-icon"><img src="${pageContext.request.contextPath}/jsp/image.png" alt="icon"></div>
                 <span>WachiturroBet</span>
             </a>

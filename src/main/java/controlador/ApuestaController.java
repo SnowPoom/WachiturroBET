@@ -84,7 +84,7 @@ public class ApuestaController extends HttpServlet {
             if (session == null || session.getAttribute("currentUser") == null) {
                 session = req.getSession(true);
                 session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Usuario no autenticado.");
+                session.setAttribute("flash_message", "Usuario no autentiaacado.");
                 resp.sendRedirect(req.getContextPath() + "/jsp/login.jsp");
                 return;
             }
