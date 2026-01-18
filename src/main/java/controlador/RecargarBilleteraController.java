@@ -9,9 +9,6 @@ import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.TypedQuery;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,125 +24,168 @@ public class RecargarBilleteraController extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    // YA NO declaramos DAOs ni EntityManager aquí como atributos de clase
-    // para evitar problemas de caché y concurrencia.
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            InitTestDataController.ensureTestUser(req, em);
-            RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
-            rd.forward(req, resp);
-        } finally {
-            em.close();
-        }
+        this.ruteador(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Abrimos el EntityManager EXCLUSIVAMENTE para esta petición
-        EntityManager em = JPAUtil.getEntityManager();
-        
-        try {
-            // Si no hay usuario en sesión, crear/asegurar el usuario de test
-            HttpSession sessionCheck = req.getSession(false);
-            if (sessionCheck == null || sessionCheck.getAttribute("currentUser") == null) {
-                InitTestDataController.ensureTestUser(req, em);
-            }
+        this.ruteador(req, resp);
+    }
 
-            // Instanciamos los DAOs con este EM fresco
-            BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
-            MovimientoJPADAO movimientoDAO = new MovimientoJPADAO(em);
-            
-            String operacion = req.getParameter("operacion");
-            if (operacion == null) operacion = "RECARGA";
-            
+    // --- PATRÓN RUTEADOR (Solicitado en Arquitectura) ---
+    private void ruteador(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Por defecto la ruta es "entrar" (carga inicial), si viene parámetro, se usa ese (ej: "recargar")
+        String ruta = (req.getParameter("ruta") != null) ? req.getParameter("ruta") : "entrar";
+
+        switch (ruta) {
+            case "entrar":
+                this.entrar(req, resp);
+                break;
+            case "recargar":
+                this.ingresarMontoARecargar(req, resp);
+                break;
+            default:
+                this.entrar(req, resp);
+                break;
+        }
+    }
+
+    // --- MÉTODOS DEL DIAGRAMA DE SECUENCIA ---
+
+    // 1. entrar(): Inicia el caso de uso
+    private void entrar(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Lógica auxiliar para asegurar datos de prueba (manteniendo tu lógica original)
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            InitTestDataController.ensureTestUser(req, em);
+        } finally {
+            em.close();
+        }
+        
+        // Paso 1.1 del diagrama
+        this.presentarFormulario(req, resp);
+    }
+
+    // 1.1. presentarFormulario(): Muestra la vista (JSP)
+    private void presentarFormulario(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
+        rd.forward(req, resp);
+    }
+
+    // 2. ingresarMontoARecargar(): Captura el input del usuario (Equivalente al inicio del POST)
+    private void ingresarMontoARecargar(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        // Abrimos EM para toda la transacción de este método
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            // Aseguramos que exista un usuario de prueba en sesión si no hay uno (evita fallo cuando la sesión es nueva)
+            InitTestDataController.ensureTestUser(req, em);
+
             UsuarioRegistrado usuario = obtenerUsuarioDeSesionOParametro(req, em);
             
             if (usuario == null) {
-                enviarError(req, resp, "Usuario no identificado.", operacion);
+                this.presentarErrorAlRecargar(req, resp, "Usuario no identificado.");
                 return;
             }
 
-            Double monto = ingresarMontoARecargar(req);
-            if (monto == null || !validarMonto(monto)) {
-                enviarError(req, resp, "El monto ingresado no es válido.", operacion);
+            // Obtener monto del request
+            String montoStr = req.getParameter("monto");
+            double monto = 0;
+            try {
+                monto = Double.parseDouble(montoStr);
+            } catch (NumberFormatException | NullPointerException e) {
+                this.presentarErrorAlRecargar(req, resp, "Formato de monto inválido.");
                 return;
             }
 
-            if ("RECARGA".equalsIgnoreCase(operacion)) {
-                boolean exitoso = procesarRecarga(req, monto, usuario, em, billeteraDAO, movimientoDAO);
-                // Se podrían tomar acciones adicionales según 'exitoso', pero la lógica de flash ya está en el método.
-            }
+            // Paso 2.1 del diagrama: Llamar a procesarRecarga
+            this.procesarRecarga(monto, usuario, req, resp, em);
 
-            // PRG: Redirect final
-            resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
-            
         } finally {
-            // IMPORTANTE: Cerrar el EM para limpiar caché y liberar la conexión
             if (em != null && em.isOpen()) {
                 em.close();
             }
         }
     }
 
-    // --- LÓGICA REFACTORIZADA PARA RECIBIR EntityManager ---
+    // 2.1. procesarRecarga(): Orquesta las validaciones y llamadas a los DAOs
+    private void procesarRecarga(double monto, UsuarioRegistrado usuario, HttpServletRequest req, HttpServletResponse resp, EntityManager em) throws IOException, ServletException {
+        
+    	BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
+        // Paso 2.2: validarMonto
+        if (!billeteraDAO.validarMonto(monto)) {
+            // Paso 2.7 (Alternativo): Presentar error
+            this.presentarErrorAlRecargar(req, resp, "El monto debe ser mayor a 0.");
+            return;
+        }
 
-    private boolean procesarRecarga(HttpServletRequest req, double monto, UsuarioRegistrado usuario, 
-                                 EntityManager em, BilleteraJPADAO billeteraDAO, MovimientoJPADAO movimientoDAO) {
-        HttpSession session = req.getSession();
-        session.setAttribute("flash_operacion", "RECARGA");
+        // Instanciar DAOs (Según diagrama: billeteraDAO y movimientoDAO)
+        MovimientoJPADAO movimientoDAO = new MovimientoJPADAO(em);
 
         try {
-            boolean recargado = billeteraDAO.recargarBilletera(monto, usuario);
-            
-            if (!recargado) {
-                session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Fallo al recargar la billetera.");
-                return false;
+            // Paso 2.3: billeteraDAO.recargarBilletera
+            boolean recargaExitosa = billeteraDAO.recargarBilletera(monto, usuario);
+
+            if (recargaExitosa) {
+                // Paso 2.5: movimientoDAO.crearMovimiento
+                Movimiento mov = new Movimiento();
+                mov.setUsuario(usuario);
+                mov.setTipo(TipoMovimiento.RECARGA);
+                mov.setMonto(monto);
+                mov.setFecha(LocalDate.now());
+                
+                boolean movExitoso = movimientoDAO.crearMovimiento(mov);
+
+                if (movExitoso) {
+                    // Actualizar saldo en sesión (Auxiliar)
+                    HttpSession session = req.getSession();
+                    InitTestDataController.actualizarSaldoEnSesion(session, usuario, em);
+                    
+                    // Paso 2.6: presentarMensajeConfirmacionRecargar
+                    this.presentarMensajeConfirmacionRecargar(req, resp, monto, usuario.getNombre());
+                } else {
+                    this.presentarErrorAlRecargar(req, resp, "Error al registrar el movimiento.");
+                }
+            } else {
+                this.presentarErrorAlRecargar(req, resp, "Error al actualizar la billetera.");
             }
-
-            Movimiento mov = new Movimiento();
-            mov.setUsuario(usuario);
-            mov.setTipo(TipoMovimiento.RECARGA);
-            mov.setMonto(monto);
-            mov.setFecha(LocalDate.now());
-
-            boolean movGuardado = movimientoDAO.crearMovimiento(mov);
-            
-            if (!movGuardado) {
-                session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Recarga exitosa, pero error al registrar movimiento.");
-                return false;
-            }
-
-            String msg = "La billetera fue recargada con $" + monto + " para usuario " + usuario.getNombre();
-            session.setAttribute("flash_status", "OK");
-            session.setAttribute("flash_message", msg);
-            session.setAttribute("flash_monto", monto);
-            session.setAttribute("flash_usuarioName", usuario.getNombre());
-
-            // Use shared helper (pass HttpSession now)
-            InitTestDataController.actualizarSaldoEnSesion(session, usuario, em);
-
-            return true;
 
         } catch (Exception e) {
-            session.setAttribute("flash_status", "ERROR");
-            session.setAttribute("flash_message", "Error inesperado: " + e.getMessage());
-            return false;
+            this.presentarErrorAlRecargar(req, resp, "Error inesperado: " + e.getMessage());
         }
     }
 
+    // 2.6. presentarMensajeConfirmacionRecargar(): Final feliz
+    private void presentarMensajeConfirmacionRecargar(HttpServletRequest req, HttpServletResponse resp, double monto, String nombreUsuario) throws IOException {
+        HttpSession session = req.getSession();
+        session.setAttribute("flash_status", "OK");
+        session.setAttribute("flash_operacion", "RECARGA");
+        session.setAttribute("flash_message", "La billetera fue recargada con $" + monto + " para usuario " + nombreUsuario);
+        session.setAttribute("flash_monto", monto);
+        session.setAttribute("flash_usuarioName", nombreUsuario);
+        
+        resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
+    }
+
+    // 2.7 y 2.8. presentarErrorAlRecargar(): Final con error
+    private void presentarErrorAlRecargar(HttpServletRequest req, HttpServletResponse resp, String mensajeError) throws IOException {
+        HttpSession session = req.getSession();
+        session.setAttribute("flash_status", "ERROR");
+        session.setAttribute("flash_operacion", "RECARGA");
+        session.setAttribute("flash_message", mensajeError);
+        
+        resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
+    }
+
+    // --- MÉTODOS UTILITARIOS (No parte del diagrama pero necesarios para que funcione) ---
+    
     private UsuarioRegistrado obtenerUsuarioDeSesionOParametro(HttpServletRequest req, EntityManager em) {
         HttpSession session = req.getSession(false);
         String usuarioIdStr = req.getParameter("usuarioId");
         
-        // Aunque esté en sesión, es mejor recargarlo del EM actual para evitar "Detached Entity"
         if (session != null && session.getAttribute("currentUser") != null) {
             UsuarioRegistrado uSession = (UsuarioRegistrado) session.getAttribute("currentUser");
-            // Lo buscamos en la DB para asegurarnos que está conectado a este EM
             return em.find(UsuarioRegistrado.class, uSession.getId());
         } 
         
@@ -158,22 +198,5 @@ public class RecargarBilleteraController extends HttpServlet {
             }
         }
         return null;
-    }
-
-    // Métodos auxiliares simples
-    private Double ingresarMontoARecargar(HttpServletRequest req) {
-        String montoStr = req.getParameter("monto");
-        if (montoStr == null) return null;
-        try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }
-    }
-
-    private boolean validarMonto(double monto) { return monto > 0; }
-
-    private void enviarError(HttpServletRequest req, HttpServletResponse resp, String mensaje, String operacion) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        session.setAttribute("flash_status", "ERROR");
-        session.setAttribute("flash_operacion", operacion);
-        session.setAttribute("flash_message", mensaje);
-        resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
     }
 }

@@ -146,6 +146,8 @@
                         <p class="card-desc">Deposita dinero a tu cuenta de forma segura</p>
                     </div>
                     <form method="post" action="${pageContext.request.contextPath}/recargarBilletera">
+                        <!-- Agregado: indicar la ruta al controlador para que procese la recarga -->
+                        <input type="hidden" name="ruta" value="recargar" />
                         <div class="form-group">
                             <label class="label">Cantidad a Depositar</label>
                             <input type="number" step="0.01" name="monto" placeholder="100" class="input" required />
