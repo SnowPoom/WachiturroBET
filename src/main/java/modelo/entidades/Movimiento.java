@@ -6,7 +6,9 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "movimientos")
-public class Movimiento  implements Serializable {
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "subtipo", discriminatorType = DiscriminatorType.STRING)
+public abstract class Movimiento implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id

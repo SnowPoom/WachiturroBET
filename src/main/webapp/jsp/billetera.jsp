@@ -150,7 +150,8 @@
                         <input type="hidden" name="ruta" value="recargar" />
                         <div class="form-group">
                             <label class="label">Cantidad a Depositar</label>
-                            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required />
+                            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required
+                                   />
                         </div>
                         
                         <button type="submit" class="btn btn-primary btn-full">
@@ -176,7 +177,8 @@
 				
 				        <div class="form-group">
 				            <label class="label">Cantidad a Retirar</label>
-				            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required>
+				            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required
+                                   />
 				            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
 				                Disponible: $<%= sessionSaldoObj != null ? sessionSaldoObj : 0.0 %>
 				            </div>

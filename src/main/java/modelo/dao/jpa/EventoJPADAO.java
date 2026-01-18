@@ -21,7 +21,11 @@ public class EventoJPADAO implements EventoDAO {
         q.setMaxResults(1);
         return q.getResultList().stream().findFirst().orElse("Evento desconocido");
     }
-
+    @Override
+    public java.util.List<Evento> obtenerTodosLosEventos() {
+        TypedQuery<Evento> q = em.createQuery("SELECT e FROM Evento e", Evento.class);
+        return q.getResultList();
+    }
     @Override
     public Evento consultarDetallesEvento(int id) {
         return em.find(Evento.class, id);

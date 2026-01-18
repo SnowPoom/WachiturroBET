@@ -11,7 +11,8 @@ public interface EventoDAO {
     
     List<Evento> obtenerEventosDisponibles();
     
-    
+    // Retorna la lista de todos los eventos
+    List<Evento> obtenerTodosLosEventos();
     
     
 }

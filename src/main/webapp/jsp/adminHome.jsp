@@ -65,30 +65,35 @@
                         <tbody>
                             <% 
                                 List<Evento> lista = (List<Evento>) request.getAttribute("listaEventos");
-                                if(lista != null && !lista.isEmpty()) { 
-                                    for(Evento e : lista) { 
+                                if (lista != null && !lista.isEmpty()) {
+                                    for (Evento e : lista) {
                             %>
                             <tr>
                                 <td><input type="radio" name="idEvento" value="<%= e.getId() %>" class="radio-custom" required></td>
                                 <td style="color: white; font-weight: 500;"><%= e.getNombre() %></td>
-                                <td><%= (e.getFecha() != null) ? e.getFecha().toString().replace("T", " ") : "Sin fecha" %></td>
-                                <td><%= (e.getCategoria() != null) ? e.getCategoria().name() : "Sin categoría" %></td>
+                                <td><%= e.getFecha() != null ? e.getFecha().toString().replace('T', ' ') : "-" %></td>
+                                <td><%= e.getCategoria() != null ? e.getCategoria().name() : "-" %></td>
                                 <td>
-                                    <% if(e.isEstado()) { %>
-                                        <span class="badge badge-green">Abierto</span>
-                                    <% } else { %>
-                                        <span class="badge badge-purple">Cerrado</span>
-                                    <% } %>
+                                    <% 
+                                        String estadoLabel = "Cerrado";
+                                        try {
+                                            if (e.getFecha() != null && e.getFecha().isAfter(java.time.LocalDateTime.now())) {
+                                                estadoLabel = "Abierto";
+                                            }
+                                        } catch (Exception ex) {
+                                            // ignore
+                                        }
+                                    %>
+                                    <span class="badge <%= "Abierto".equals(estadoLabel) ? "badge-green" : "badge-purple" %>"><%= estadoLabel %></span>
                                 </td>
                             </tr>
-                            <% 
-                                    } 
-                                } else {
-                            %>
+                            <%      }
+                                } else { %>
                             <tr>
-                                <td colspan="5" class="text-center" style="padding: 2rem;">No hay eventos registrados.</td>
+                                <td colspan="5">No hay eventos registrados.</td>
                             </tr>
                             <% } %>
+                        </tbody>
                     </table>
                 </div>
                 
@@ -118,10 +123,6 @@
                 return;
             }
 
-            // Aquí rediriges al controlador adecuado. 
-            // Podrías usar formaction en los botones si fuera HTML5 puro, pero JS es más seguro para validación.
-            // Ajusta la URL según tu ruteo (ej: "GestionarPronosticos?id=" + selected.value)
-            
             if (controller === 'FinalizarEventoController') {
                 form.action = "${pageContext.request.contextPath}/finalizarEvento"; // URL Controller Finalizar
             } else {

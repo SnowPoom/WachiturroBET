@@ -20,6 +20,10 @@ public class Pronostico implements Serializable {
     @JoinColumn(name = "id_evento")
     private Evento evento;
 
+    // Nuevo atributo que indica si el pronóstico resultó ganador
+    @Column(name = "es_ganador")
+    private boolean esGanador;
+
     public Pronostico() {}
 
     public Pronostico(int id, Evento evento, String descripcion, double cuotaActual) {
@@ -27,6 +31,7 @@ public class Pronostico implements Serializable {
         this.evento = evento;
         this.descripcion = descripcion;
         this.cuotaActual = cuotaActual;
+        this.esGanador = false; // valor por defecto
     }
 
     public int getId() {
@@ -59,5 +64,13 @@ public class Pronostico implements Serializable {
 
     public void setEvento(Evento evento) {
         this.evento = evento;
+    }
+
+    public boolean isEsGanador() {
+        return esGanador;
+    }
+
+    public void setEsGanador(boolean esGanador) {
+        this.esGanador = esGanador;
     }
 }
