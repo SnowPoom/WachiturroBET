@@ -22,72 +22,108 @@ import modelo.entidades.Movimiento;
 import modelo.entidades.TipoMovimiento;
 import modelo.entidades.UsuarioRegistrado;
 
-@WebServlet("/retirarBilletera")
+// CAMBIO 1: Usamos el nombre de la clase como URL (estándar del profe)
+@WebServlet("/retirarFondos")
 public class RetirarFondosController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
+
+    public RetirarFondosController() {
+        super();
+    }
+
+    // --- EL FRONT CONTROLLER (Router) ---
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.ruteador(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.ruteador(req, resp);
+    }
+
+    private void ruteador(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Por defecto, si no hay ruta, es "entrar" (inicio del caso de uso)
+        String ruta = (req.getParameter("ruta") == null) ? "entrar" : req.getParameter("ruta");
+
+        switch (ruta) {
+            case "entrar":
+                this.entrar(req, resp);
+                break;
+            case "retirar":
+                this.retirarFondos(req, resp);
+                break;
+            default:
+                this.entrar(req, resp);
+                break;
+        }
+    }
+
+    // --- MÉTODOS DEL DIAGRAMA DE SECUENCIA ---
+
+    /**
+     * Flecha 1 del diagrama: entrar()
+     */
+    private void entrar(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             ensureTestUser(req, em);
-            RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
-            rd.forward(req, resp);
+            
+            // Flecha 1.1 del diagrama: presentarFormulario()
+            this.presentarFormulario(req, resp);
+            
         } finally {
-            em.close();
+            if (em != null) em.close();
         }
     }
-    
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    /**
+     * Flecha 2.2 del diagrama: retirarFondos(...)
+     * Este método orquesta la lógica de negocio (Valida y llama al DAO)
+     */
+    private void retirarFondos(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();
         try {
+            HttpSession session = req.getSession();
+            session.setAttribute("flash_operacion", "RETIRO");
+
+            // 1. Obtener Parámetros
+            UsuarioRegistrado usuario = obtenerUsuarioDeSesionOParametro(req, em);
+            if (usuario == null) {
+                presentarMensajeErrorRetirar(req, resp, "Usuario no identificado.");
+                return;
+            }
+
+            // Flecha 2: ingresarMontoARetirar(...)
+            Double monto = ingresarMontoARetirar(req);
+
+            // Flecha 2.1: verificarMontoARetirar (Validación básica)
+            if (monto == null || monto <= 0) {
+                presentarMensajeErrorRetirar(req, resp, "El monto ingresado no es válido.");
+                return;
+            }
+
+            // Instanciar DAOs
             BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
             MovimientoJPADAO movimientoDAO = new MovimientoJPADAO(em);
-            
-            String operacion = "RETIRO"; 
-            UsuarioRegistrado usuario = obtenerUsuarioDeSesionOParametro(req, em);
-            
-            if (usuario == null) {
-                enviarError(req, resp, "Usuario no identificado.", operacion);
-                return;
-            }
 
-            Double monto = ingresarMontoARetirar(req);
-            if (monto == null || !esMontoValido(monto)) {
-                enviarError(req, resp, "El monto ingresado no es válido.", operacion);
-                return;
-            }
-
-            procesarRetiro(req, monto, usuario, em, billeteraDAO, movimientoDAO);
-
-            // PRG
-            resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
-        } finally {
-            if (em != null && em.isOpen()) em.close();
-        }
-    }
-    
-    private void procesarRetiro(HttpServletRequest req, double monto, UsuarioRegistrado usuario,
-                                EntityManager em, BilleteraJPADAO billeteraDAO, MovimientoJPADAO movimientoDAO) {
-        HttpSession session = req.getSession();
-        session.setAttribute("flash_operacion", "RETIRO");
-        
-        try {
+            // Verificación de Fondos (Lógica del DAO)
             boolean tieneFondos = billeteraDAO.existenFondosValidos(usuario, monto);
             if (!tieneFondos) {
-                session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Fondos insuficientes para retirar $" + monto);
+                // Flecha 2.7 (Caso alterno): presentarMensajeErrorRetirar
+                presentarMensajeErrorRetirar(req, resp, "Fondos insuficientes.");
                 return;
             }
 
+            // Ejecución del Retiro
             boolean retirado = billeteraDAO.retirarFondos(monto, usuario);
             if (!retirado) {
-                session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Fallo al retirar fondos.");
+                presentarMensajeErrorRetirar(req, resp, "Fallo técnico al retirar fondos.");
                 return;
             }
 
+            // Flecha 2.4: crearMovimiento(...)
             Movimiento mov = new Movimiento();
             mov.setUsuario(usuario);
             mov.setTipo(TipoMovimiento.RETIRO);
@@ -95,26 +131,68 @@ public class RetirarFondosController extends HttpServlet {
             mov.setFecha(LocalDate.now());
 
             if (!movimientoDAO.crearMovimiento(mov)) {
-                session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Retiro exitoso, pero error al registrar movimiento.");
+                presentarMensajeErrorRetirar(req, resp, "Error al registrar el historial.");
                 return;
             }
 
-            session.setAttribute("flash_status", "OK");
-            session.setAttribute("flash_message", "Se retiraron $" + monto + " correctamente.");
-            session.setAttribute("flash_monto", monto);
-            session.setAttribute("flash_usuarioName", usuario.getNombre());
-
+            // Actualizar sesión para la vista
             actualizarSaldoEnSesion(req, usuario, em);
 
+            // Flecha 2.6: presentarMensajeConfirmacionRetiro()
+            presentarMensajeConfirmacionRetiro(req, resp, monto, usuario.getNombre());
+
         } catch (Exception e) {
-            session.setAttribute("flash_status", "ERROR");
-            session.setAttribute("flash_message", "Error inesperado en retiro: " + e.getMessage());
+            e.printStackTrace();
+            presentarMensajeErrorRetirar(req, resp, "Error inesperado: " + e.getMessage());
+        } finally {
+            if (em != null) em.close();
         }
     }
-    
-    // --- MÉTODOS AUXILIARES COPIADOS Y ADAPTADOS PARA RECIBIR EM ---
-    
+
+    // --- MÉTODOS DE VISTA (Boundaries del diagrama) ---
+
+    /**
+     * Flecha 1.1: presentarFormulario()
+     */
+    private void presentarFormulario(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // En el diagrama esto va hacia "billetera : Billetera" (La vista)
+        RequestDispatcher rd = req.getRequestDispatcher("/jsp/billetera.jsp");
+        rd.forward(req, resp);
+    }
+
+    /**
+     * Flecha 2.6: presentarMensajeConfirmacionRetiro()
+     */
+    private void presentarMensajeConfirmacionRetiro(HttpServletRequest req, HttpServletResponse resp, double monto, String nombreUsuario) throws ServletException, IOException {
+        HttpSession session = req.getSession();
+        session.setAttribute("flash_status", "OK");
+        session.setAttribute("flash_message", "Se retiraron $" + monto + " correctamente.");
+        session.setAttribute("flash_monto", monto);
+        session.setAttribute("flash_usuarioName", nombreUsuario);
+        
+        // Redirigir para evitar resubmission (PRG Pattern) pero volviendo a entrar
+        resp.sendRedirect("retirarFondos?ruta=entrar");
+    }
+
+    /**
+     * Flecha 2.7: presentarMensajeErrorRetirar()
+     */
+    private void presentarMensajeErrorRetirar(HttpServletRequest req, HttpServletResponse resp, String mensaje) throws ServletException, IOException {
+        HttpSession session = req.getSession();
+        session.setAttribute("flash_status", "ERROR");
+        session.setAttribute("flash_message", mensaje);
+        
+        resp.sendRedirect("retirarFondos?ruta=entrar");
+    }
+
+    // --- MÉTODOS AUXILIARES (Lógica interna, igual que antes) ---
+
+    private Double ingresarMontoARetirar(HttpServletRequest req) {
+        String montoStr = req.getParameter("monto");
+        if (montoStr == null) return null;
+        try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }
+    }
+
     private void ensureTestUser(HttpServletRequest req, EntityManager em) {
         HttpSession session = req.getSession();
         if (session.getAttribute("currentUser") != null) return; 
@@ -155,12 +233,10 @@ public class RetirarFondosController extends HttpServlet {
     private UsuarioRegistrado obtenerUsuarioDeSesionOParametro(HttpServletRequest req, EntityManager em) {
         HttpSession session = req.getSession(false);
         String usuarioIdStr = req.getParameter("usuarioId");
-        
         if (session != null && session.getAttribute("currentUser") != null) {
             UsuarioRegistrado u = (UsuarioRegistrado) session.getAttribute("currentUser");
-            return em.find(UsuarioRegistrado.class, u.getId()); // Re-attach
+            return em.find(UsuarioRegistrado.class, u.getId());
         } 
-        
         if (usuarioIdStr != null) {
             try {
                 int uid = Integer.parseInt(usuarioIdStr);
@@ -176,7 +252,7 @@ public class RetirarFondosController extends HttpServlet {
         HttpSession session = req.getSession(false);
         if (session != null) {
             try {
-                em.getEntityManagerFactory().getCache().evictAll(); // Limpiar cache
+                em.getEntityManagerFactory().getCache().evictAll();
                 TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
                 q.setParameter("uid", usuario.getId());
                 Double saldo = q.getSingleResult();
@@ -185,21 +261,5 @@ public class RetirarFondosController extends HttpServlet {
                 ex.printStackTrace();
             }
         }
-    }
-    
-    private Double ingresarMontoARetirar(HttpServletRequest req) {
-        String montoStr = req.getParameter("monto");
-        if (montoStr == null) return null;
-        try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }
-    }
-    
-    private boolean esMontoValido(double monto) { return monto > 0; }
-
-    private void enviarError(HttpServletRequest req, HttpServletResponse resp, String mensaje, String operacion) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        session.setAttribute("flash_status", "ERROR");
-        session.setAttribute("flash_operacion", operacion);
-        session.setAttribute("flash_message", mensaje);
-        resp.sendRedirect(req.getContextPath() + "/jsp/billetera.jsp");
     }
 }

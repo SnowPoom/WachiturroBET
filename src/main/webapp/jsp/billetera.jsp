@@ -157,24 +157,37 @@
                         </button>
                     </form>
                 </div>
-
-                <div id="tab-withdraw" class="tab-content">
-                    <div class="text-center mb-4">
-                        <h3 class="text-2xl">Retirar Fondos</h3>
-                        <p class="card-desc">Retira tus ganancias de forma segura</p>
-                    </div>
-                    <form method="post" action="${pageContext.request.contextPath}/retirarBilletera">
-                        <div class="form-group">
-                            <label class="label">Cantidad a Retirar</label>
-                            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Disponible: $<%= sessionSaldoObj != null ? sessionSaldoObj : 2450.0 %></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">
-                            <svg class="icon" style="margin-right: 0.5rem;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/><path d="M12 8v8"/></svg>
-                            Retirar Ahora
-                        </button>
-                    </form>
-                </div>
+			
+				<div id="tab-withdraw" class="tab-content">
+				    <div class="text-center mb-4">
+				        <h3 class="text-2xl">Retirar Fondos</h3>
+				        <p class="card-desc">Retira tus ganancias de forma segura</p>
+				    </div>
+				    
+				    <form method="post" action="${pageContext.request.contextPath}/retirarFondos">
+				        
+				        <input type="hidden" name="ruta" value="retirar">
+				
+				        <% if (sessionUserObj != null) { %>
+				            <input type="hidden" name="usuarioId" value="<%= sessionUserId %>" />
+				        <% } %>
+				
+				        <div class="form-group">
+				            <label class="label">Cantidad a Retirar</label>
+				            <input type="number" step="0.01" name="monto" placeholder="100" class="input" required>
+				            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+				                Disponible: $<%= sessionSaldoObj != null ? sessionSaldoObj : 0.0 %>
+				            </div>
+				        </div>
+				        
+				        <button type="submit" class="btn btn-primary btn-full">
+				            <svg class="icon" style="margin-right: 0.5rem;" viewBox="0 0 24 24">
+				                <circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/><path d="M12 8v8"/>
+				            </svg>
+				            Retirar Ahora
+				        </button>
+				    </form>
+				</div>
 
             </div>
         </div>
