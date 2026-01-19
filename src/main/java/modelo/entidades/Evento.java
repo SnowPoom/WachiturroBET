@@ -1,6 +1,7 @@
 package modelo.entidades;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import jakarta.persistence.*;
 
 @Entity
@@ -76,4 +77,10 @@ public class Evento {
 	public void setEstado(boolean estado) {
 		this.estado = estado;
 	}
+
+    public String getFechaFormateada() {
+        if (this.fecha == null) return "-";
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+        return this.fecha.format(fmt);
+    }
 }

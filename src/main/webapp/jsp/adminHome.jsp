@@ -77,7 +77,7 @@
                             <tr>
                                 <td><input type="radio" name="idEvento" value="<%= e.getId() %>" class="radio-custom" required></td>
                                 <td style="color: white; font-weight: 500;"><%= e.getNombre() %></td>
-                                <td><%= e.getFecha() != null ? e.getFecha().toString().replace('T', ' ') : "-" %></td>
+                                <td><%= e.getFechaFormateada() %></td>
                                 <td><%= e.getCategoria() != null ? e.getCategoria().name() : "-" %></td>
                                 <td>
                                     <% 

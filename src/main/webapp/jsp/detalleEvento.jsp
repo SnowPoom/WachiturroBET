@@ -40,7 +40,7 @@
             <div class="flex-between mb-4">
                 <span class="badge badge-purple">${eventoDetalle.categoria}</span>
                 <div class="flex-center gap-2 card-desc">
-                    <span>${eventoDetalle.fecha}</span>
+                    <span>${eventoDetalle.fechaFormateada}</span>
                 </div>
             </div>
             <h3 class="card-title">${eventoDetalle.nombre}</h3>

@@ -124,7 +124,7 @@
                             <span class="badge badge-purple">${evento.categoria}</span>
                             <div class="flex-center gap-2 card-desc">
                                 <svg class="icon" style="width: 1rem; height: 1rem;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span>${evento.fecha}</span>
+                                <span>${evento.fechaFormateada}</span>
                             </div>
                         </div>
                         <h3 class="card-title">${evento.nombre}</h3>
