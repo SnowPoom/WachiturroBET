@@ -18,12 +18,14 @@
             </a>
 
             <div class="search-wrapper">
-                <svg class="icon search-icon-overlay" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                </svg>
-                <input type="text" class="input input-search" placeholder="Buscar eventos, equipos o ligas...">
-            </div>
+    			<svg class="icon search-icon-overlay" viewBox="0 0 24 24">
+        			<circle cx="11" cy="11" r="8"></circle>
+        			<line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+    			</svg>
+    			<input type="text" id="searchInput" class="input input-search" 
+          			placeholder="Buscar eventos, equipos o ligas..."
+           			onkeypress="handleSearch(event)">
+			</div>
 
             <div class="flex-center gap-2">
                 <a href="${pageContext.request.contextPath}/adminLogin" class="btn btn-ghost" 
@@ -156,17 +158,28 @@
         </div>
     </div>
     <script>
-    (function() {
-        // Solo intentamos inicializar si no estamos ya en el proceso
-        // Hacemos una petición silenciosa (fetch)
-        fetch('${pageContext.request.contextPath}/initTestData')
-            .then(response => {
-                console.log("Datos verificados/inicializados");
-                // Opcional: Recargar si la lista estaba vacía
-            })
-            .catch(error => console.log("Error inicializando datos", error));
-    })();
-</script>
+    	(function() {
+        	// Solo intentamos inicializar si no estamos ya en el proceso
+        	// Hacemos una petición silenciosa (fetch)
+        	fetch('${pageContext.request.contextPath}/initTestData')
+            	.then(response => {
+                	console.log("Datos verificados/inicializados");
+                	// Opcional: Recargar si la lista estaba vacía
+            	})
+            	.catch(error => console.log("Error inicializando datos", error));
+    	})();
+    	
+    	function handleSearch(event) {
+            // Detectar si la tecla presionada es ENTER (Código 13)
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                const texto = document.getElementById('searchInput').value;
+                if (texto.trim() !== "") {
+                    // Redirigir al controlador con el texto
+                    window.location.href = '${pageContext.request.contextPath}/buscarEvento?ruta=buscar&texto=' + encodeURIComponent(texto);
+                }
+            }
+        }
+	</script>
 
 </body>
 </html>

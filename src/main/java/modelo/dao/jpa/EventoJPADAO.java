@@ -118,4 +118,11 @@ public class EventoJPADAO implements EventoDAO {
             return false;
         }
     }
+    
+    public List<Evento> buscarEventosPorNombre(String texto) {
+        String jpql = "SELECT e FROM Evento e WHERE LOWER(e.nombre) LIKE LOWER(:texto) ORDER BY e.fecha ASC";
+        TypedQuery<Evento> query = em.createQuery(jpql, Evento.class);
+        query.setParameter("texto", "%" + texto + "%");
+        return query.getResultList();
+    }
 }

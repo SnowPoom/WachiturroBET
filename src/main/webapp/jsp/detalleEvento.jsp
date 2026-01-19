@@ -29,7 +29,6 @@
                 <jsp:include page="mensajeConfirmacionApuesta.jsp" />
             </c:otherwise>
         </c:choose>
-        <!-- limpiar flash después de mostrar -->
         <c:remove var="flash_message" scope="session" />
         <c:remove var="flash_status" scope="session" />
         <c:remove var="flash_operacion" scope="session" />
@@ -69,7 +68,16 @@
                     </c:forEach>
                 </div>
             </form>
-        </div>
+
+            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(168, 85, 247, 0.1); text-align: center;">
+                <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar" class="btn btn-ghost">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:1.2em; height:1.2em; margin-right:0.5rem; vertical-align: bottom;">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Volver a la Lista
+                </a>
+            </div>
+            </div>
     </div>
 </div>
 </body>

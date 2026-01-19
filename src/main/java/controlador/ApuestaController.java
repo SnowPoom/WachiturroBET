@@ -129,7 +129,11 @@ public class ApuestaController extends HttpServlet {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_operacion", "APOSTAR");
                 session.setAttribute("flash_message", "mostrarFondosInsuficientes");
-                resp.sendRedirect(req.getContextPath() + "/jsp/MensajeErrorBilletera.jsp");
+                // Mantener comportamiento consistente con la validación de monto:
+                // redirigir al detalle del evento para mostrar el mensaje de error en la misma vista.
+                String redirectUrl = req.getContextPath() + "/apuesta?action=seleccionarEvento";
+                if (idEventoStr != null) redirectUrl += "&idEvento=" + idEventoStr;
+                resp.sendRedirect(redirectUrl);
                 return;
             }
 
