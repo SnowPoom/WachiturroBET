@@ -139,6 +139,8 @@
                             <thead>
                                 <tr>
                                     <th>Evento</th>
+                                    <th>Pronóstico</th>
+                                    <th>Cuota</th>
                                     <th>Fecha</th>
                                     <th>Monto</th>
                                     <th>Estado</th>
@@ -154,6 +156,14 @@
                                             <div class="card-desc" style="font-size: 0.75rem;">
                                                 <c:out value="${apuesta.pronostico.evento.categoria}" default="General"/>
                                             </div>
+                                        </td>
+
+                                        <td style="color: var(--text-muted); max-width: 20rem;">
+                                            <c:out value="${apuesta.pronostico.descripcion}" default="-"/>
+                                        </td>
+
+                                        <td style="font-weight: 500;">
+                                            <fmt:formatNumber value="${apuesta.cuotaRegistrada}" type="number" minFractionDigits="2" maxFractionDigits="2"/>
                                         </td>
 
                                         <td style="color: var(--text-muted);">
