@@ -59,12 +59,23 @@ public class CrearEventoController extends HttpServlet {
         this.mostrarFormularioEvento(req, resp);
     }
 
-    // 1.1: mostrarFormularioEvento()
+ // 1.1: mostrarFormularioEvento()
     private void mostrarFormularioEvento(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        
+        // --- LÓGICA DE LIMPIEZA AGREGADA ---
+        // Si venimos del botón "Crear Evento" del menú, limpiamos mensajes viejos.
+        if ("true".equals(req.getParameter("reset"))) {
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                session.removeAttribute("flash_status");
+                session.removeAttribute("flash_message");
+            }
+        }
+        // ------------------------------------
+
         RequestDispatcher rd = req.getRequestDispatcher("/jsp/nuevoEvento.jsp");
         rd.forward(req, resp);
     }
-
     // 2: ingresar(...)
     private void ingresar(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();

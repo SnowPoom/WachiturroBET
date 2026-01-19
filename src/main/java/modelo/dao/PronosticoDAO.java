@@ -8,4 +8,5 @@ public interface PronosticoDAO {
     List<Pronostico> obtenerPronosticosPorEvento(Evento evento);
 
     String obtenerDescripcion(int idPronostico);
+    
 }

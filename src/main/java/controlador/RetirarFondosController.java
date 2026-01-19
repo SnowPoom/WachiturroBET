@@ -2,6 +2,8 @@ package controlador;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
@@ -190,7 +192,16 @@ public class RetirarFondosController extends HttpServlet {
     private Double ingresarMontoARetirar(HttpServletRequest req) {
         String montoStr = req.getParameter("monto");
         if (montoStr == null) return null;
-        try { return Double.parseDouble(montoStr); } catch (NumberFormatException nfe) { return null; }
+        montoStr = montoStr.trim().replace(',', '.');
+        // Validar que tenga máxima 2 decimales y sea numérico positivo
+        if (!montoStr.matches("^\\d+(\\.\\d{1,2})?$")) return null;
+        try {
+            BigDecimal bd = new BigDecimal(montoStr);
+            bd = bd.setScale(2, RoundingMode.HALF_UP);
+            return bd.doubleValue();
+        } catch (NumberFormatException | ArithmeticException e) {
+            return null;
+        }
     }
 
     private void ensureTestUser(HttpServletRequest req, EntityManager em) {

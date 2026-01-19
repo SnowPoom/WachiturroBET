@@ -8,7 +8,6 @@
     <title>WachiturroBet - Admin Home</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/jsp/styles.css">
     <style>
-        /* Estilos ad-hoc para la tabla manteniendo el tema */
         .admin-table { width: 100%; border-collapse: collapse; color: var(--text-muted); }
         .admin-table th { text-align: left; padding: 1rem; color: #fff; border-bottom: 1px solid var(--color-border); }
         .admin-table td { padding: 1rem; border-bottom: 1px solid rgba(168, 85, 247, 0.1); }
@@ -19,11 +18,18 @@
 <body>
     <header class="navbar">
         <div class="container nav-content">
-            <a href="homeAdmin.jsp" class="logo">
+            <a href="${pageContext.request.contextPath}/gestionarEventos" class="logo">
                 <div class="logo-icon"><img src="${pageContext.request.contextPath}/jsp/image.png" alt="icon"></div>
                 <span>WachiturroBet Admin</span>
             </a>
             <div class="flex-center gap-2">
+                <a href="${pageContext.request.contextPath}/initTestData?forceUser=true" class="btn btn-ghost" 
+                   style="color: #4ade80; border: 1px dashed rgba(74, 222, 128, 0.5); margin-right: 10px;" 
+                   title="Cambiar a sesión de Usuario">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Modo Usuario
+                </a>
+                
                 <a href="profile.jsp" class="btn btn-ghost">Salir</a>
             </div>
         </div>
@@ -41,7 +47,7 @@
                 <h3 class="card-title" style="margin:0;">Listado de Eventos</h3>
                 
                 <div class="flex-center gap-2">
-                    <a href="${pageContext.request.contextPath}/crearEvento" class="btn btn-primary">
+                    <a href="${pageContext.request.contextPath}/crearEvento?ruta=crear&reset=true" class="btn btn-primary">
                         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                         Crear Evento
                     </a>
@@ -75,17 +81,14 @@
                                 <td><%= e.getCategoria() != null ? e.getCategoria().name() : "-" %></td>
                                 <td>
                                     <% 
-    // Usamos el booleano real de la base de datos
-    // Si e.isEstado() es true, está Abierto. Si es false, está Cerrado.
-    String estadoLabel = e.isEstado() ? "Abierto" : "Cerrado";
-    
-    // Opcional: Si quieres mantener el color verde/morado
-    String badgeClass = e.isEstado() ? "badge-green" : "badge-purple";
-%>
-<span class="badge <%= badgeClass %>"><%= estadoLabel %></span>
+                                        String estadoLabel = e.isEstado() ? "Abierto" : "Cerrado";
+                                        String badgeClass = e.isEstado() ? "badge-green" : "badge-purple";
+                                    %>
+                                    <span class="badge <%= badgeClass %>"><%= estadoLabel %></span>
                                 </td>
                             </tr>
-                            <%      }
+                            <%      
+                                    }
                                 } else { %>
                             <tr>
                                 <td colspan="5">No hay eventos registrados.</td>
@@ -122,9 +125,9 @@
             }
 
             if (controller === 'FinalizarEventoController') {
-                form.action = "${pageContext.request.contextPath}/finalizarEvento"; // URL Controller Finalizar
+                form.action = "${pageContext.request.contextPath}/finalizarEvento"; 
             } else {
-                form.action = "${pageContext.request.contextPath}/gestionarPronosticos"; // URL Controller Gestionar
+                form.action = "${pageContext.request.contextPath}/gestionarPronosticos";
             }
             form.submit();
         }

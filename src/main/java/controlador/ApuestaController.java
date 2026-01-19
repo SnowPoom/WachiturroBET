@@ -20,6 +20,8 @@ import modelo.entidades.UsuarioRegistrado;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @WebServlet("/apuesta")
@@ -98,7 +100,15 @@ public class ApuestaController extends HttpServlet {
             String idEventoStr = req.getParameter("idEvento");
 
             Double monto = null;
-            try { monto = Double.parseDouble(montoStr); } catch (Exception e) { monto = null; }
+            try {
+                if (montoStr != null) {
+                    montoStr = montoStr.trim().replace(',', '.');
+                    if (!montoStr.matches("^\\d+(\\.\\d{1,2})?$") ) throw new NumberFormatException();
+                    BigDecimal bd = new BigDecimal(montoStr);
+                    bd = bd.setScale(2, RoundingMode.HALF_UP);
+                    monto = bd.doubleValue();
+                }
+            } catch (Exception e) { monto = null; }
 
             // Validación 1: monto > 0
             if (monto == null || monto <= 0) {

@@ -29,15 +29,26 @@ public class InitTestDataController extends HttpServlet {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = null;
         try {
+            // --- LÓGICA NUEVA: CAMBIO DE SESIÓN ---
+            // Si recibimos el parámetro forceUser, limpiamos la sesión (sacamos al Admin)
+            if ("true".equals(req.getParameter("forceUser"))) {
+                HttpSession session = req.getSession(false);
+                if (session != null) {
+                    session.removeAttribute("currentUser");
+                    session.removeAttribute("currentUserId");
+                }
+            }
+            // --------------------------------------
+
             // 1. Verificar si ya existen eventos
             TypedQuery<Long> q = em.createQuery("SELECT COUNT(e) FROM Evento e", Long.class);
             Long count = q.getSingleResult();
             
-            // IMPORTANTE: Si ya tienes datos, NO creamos nada nuevo para no duplicar.
-            // Si quieres ver los nuevos, borra tu base de datos o cambia esta condición.
+            // Si ya hay datos, aseguramos el usuario y redirigimos
             if (count != null && count > 0) {
                 ensureTestUser(req, em);
-                resp.sendRedirect(req.getContextPath() + "/ListarEventosController?ruta=entrar");
+                // Redirigimos al Home del Usuario
+                resp.sendRedirect(req.getContextPath() + "/index.jsp"); 
                 return;
             }
 
@@ -46,12 +57,12 @@ public class InitTestDataController extends HttpServlet {
 
             System.out.println("--- INICIANDO CREACIÓN DE DATOS DE PRUEBA ---");
 
-            // --- EVENTO 1: FÚTBOL (El Clásico) ---
+            // --- EVENTO 1: FÚTBOL ---
             crearEventoCompleto(em, 
                 "Real Madrid vs FC Barcelona", 
                 "La Liga - Jornada 32. El clásico español decisivo por el título.",
-                LocalDateTime.now().plusDays(2), // Juegan en 2 días
-                TipoCategoria.DEPORTE,
+                LocalDateTime.now().plusDays(2), 
+                TipoCategoria.DEPORTES,
                 new Object[][] {
                     {"Gana Real Madrid", 2.15},
                     {"Empate", 3.40},
@@ -59,7 +70,7 @@ public class InitTestDataController extends HttpServlet {
                 }
             );
 
-            // --- EVENTO 2: E-SPORTS (League of Legends) ---
+            // --- EVENTO 2: E-SPORTS ---
             crearEventoCompleto(em, 
                 "T1 vs Gen.G - Worlds Final", 
                 "Gran Final del Campeonato Mundial de League of Legends 2026.",
@@ -71,15 +82,15 @@ public class InitTestDataController extends HttpServlet {
                 }
             );
 
-            // --- EVENTO 3: TENIS (Grand Slam) ---
+            // --- EVENTO 3: TENIS ---
             crearEventoCompleto(em, 
                 "Alcaraz vs Sinner", 
                 "Final de Roland Garros. Duelo de la nueva generación.",
                 LocalDateTime.now().plusDays(1),
-                TipoCategoria.DEPORTE,
+                TipoCategoria.DEPORTES,
                 new Object[][] {
                     {"Gana Alcaraz", 1.85},
-                    {"Gana Sinner", 1.85}, // Cuotas iguales, partido reñido
+                    {"Gana Sinner", 1.85},
                     {"Más de 3.5 Sets", 1.40}
                 }
             );
@@ -90,8 +101,8 @@ public class InitTestDataController extends HttpServlet {
             // Aseguramos usuario de prueba
             ensureTestUser(req, em);
 
-            // Redirigir al nuevo Ruteador
-            resp.sendRedirect(req.getContextPath() + "/ListarEventosController?ruta=entrar");
+            // Redirigir al Home del Usuario
+            resp.sendRedirect(req.getContextPath() + "/index.jsp");
             
         } catch (Exception e) {
             if (tx != null && tx.isActive()) tx.rollback();
@@ -102,23 +113,17 @@ public class InitTestDataController extends HttpServlet {
         }
     }
 
-    /**
-     * Método auxiliar para crear un evento y sus pronósticos en una sola llamada.
-     * Evita repetir código y hace el doGet más legible.
-     */
     private void crearEventoCompleto(EntityManager em, String nombre, String desc, LocalDateTime fecha, TipoCategoria cat, Object[][] datosPronosticos) {
-        // 1. Crear y persistir el Evento
         Evento ev = new Evento();
         ev.setNombre(nombre);
         ev.setDescripcion(desc);
         ev.setFecha(fecha);
         ev.setCategoria(cat);
+        // Por defecto estado = true (Abierto)
+        ev.setEstado(true); 
         em.persist(ev);
-        
-        // Flush para asegurar que el evento tenga ID antes de asignarlo a los pronósticos
         em.flush(); 
 
-        // 2. Iterar y crear los pronósticos
         for (Object[] datos : datosPronosticos) {
             String descripcionPronostico = (String) datos[0];
             Double cuota = (Double) datos[1];
@@ -126,15 +131,15 @@ public class InitTestDataController extends HttpServlet {
             Pronostico p = new Pronostico();
             p.setDescripcion(descripcionPronostico);
             p.setCuotaActual(cuota);
-            p.setEvento(ev); // Relación bidireccional
+            p.setEvento(ev);
+            p.setEsGanador(false);
             em.persist(p);
         }
     }
 
-    // --- MÉTODOS DE USUARIO DE PRUEBA (Sin cambios, solo copiados para mantener funcionalidad) ---
-
     public static void ensureTestUser(HttpServletRequest req, EntityManager em) {
         HttpSession session = req.getSession(true);
+        // Si ya hay alguien logueado (y no lo borramos antes), no hacemos nada
         if (session.getAttribute("currentUser") != null) return;
 
         final String testEmail = "test@example.com";
@@ -156,7 +161,7 @@ public class InitTestDataController extends HttpServlet {
                 em.persist(usuario);
 
                 Billetera billetera = new Billetera();
-                billetera.setSaldo(5000.0); // Le subí el saldo para que pruebes apostar harto
+                billetera.setSaldo(5000.0); 
                 billetera.setUsuario(usuario);
                 em.persist(billetera);
                 em.flush();
@@ -164,6 +169,7 @@ public class InitTestDataController extends HttpServlet {
             }
 
             if (usuario != null) {
+                // Refrescamos la entidad para evitar problemas de detached
                 UsuarioRegistrado managedUser = em.find(UsuarioRegistrado.class, usuario.getId());
                 actualizarSaldoEnSesion(session, managedUser, em);
                 session.setAttribute("currentUser", managedUser);

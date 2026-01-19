@@ -81,4 +81,19 @@ public class EventoJPADAO implements EventoDAO {
             return false;
         }
     }
+ // 3.1: finalizarEvento
+    public boolean finalizarEvento(Evento evento) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            evento.setEstado(false); // false = Cerrado
+            em.merge(evento);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

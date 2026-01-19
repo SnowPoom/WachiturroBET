@@ -7,6 +7,8 @@ import jakarta.persistence.TypedQuery;
 import modelo.dao.IBilleteraDAO;
 import modelo.entidades.Billetera;
 import modelo.entidades.UsuarioRegistrado;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class BilleteraJPADAO implements IBilleteraDAO {
 
@@ -41,7 +43,11 @@ public class BilleteraJPADAO implements IBilleteraDAO {
                 em.persist(billetera);
             }
 
-            billetera.setSaldo(billetera.getSaldo() + monto);
+            // Usar BigDecimal para sumar y normalizar a 2 decimales
+            BigDecimal saldoBD = BigDecimal.valueOf(billetera.getSaldo());
+            BigDecimal montoBD = BigDecimal.valueOf(monto);
+            BigDecimal nuevo = saldoBD.add(montoBD).setScale(2, RoundingMode.HALF_UP);
+            billetera.setSaldo(nuevo.doubleValue());
             em.merge(billetera);
             tx.commit();
             return true;
@@ -59,7 +65,11 @@ public class BilleteraJPADAO implements IBilleteraDAO {
             TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
             q.setParameter("uid", usuario.getId());
             Double saldo = q.getSingleResult();
-            return saldo != null && saldo >= monto;
+            if (saldo == null) return false;
+            // Compare using BigDecimal scaled to 2 decimals
+            BigDecimal saldoBD = BigDecimal.valueOf(saldo).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal montoBD = BigDecimal.valueOf(monto).setScale(2, RoundingMode.HALF_UP);
+            return saldoBD.compareTo(montoBD) >= 0;
         } catch (NoResultException nre) {
             return false;
         } catch (Exception e) {
@@ -77,11 +87,15 @@ public class BilleteraJPADAO implements IBilleteraDAO {
             TypedQuery<Billetera> q = em.createQuery("SELECT b FROM Billetera b WHERE b.usuario.id = :uid", Billetera.class);
             q.setParameter("uid", usuario.getId());
             Billetera billetera = q.getSingleResult();
-            if (billetera.getSaldo() < monto) {
+            // Usar BigDecimal para comparar y restar
+            BigDecimal saldoBD = BigDecimal.valueOf(billetera.getSaldo()).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal montoBD = BigDecimal.valueOf(monto).setScale(2, RoundingMode.HALF_UP);
+            if (saldoBD.compareTo(montoBD) < 0) {
                 tx.rollback();
                 return false;
             }
-            billetera.setSaldo(billetera.getSaldo() - monto);
+            BigDecimal nuevo = saldoBD.subtract(montoBD).setScale(2, RoundingMode.HALF_UP);
+            billetera.setSaldo(nuevo.doubleValue());
             em.merge(billetera);
             tx.commit();
             return true;
