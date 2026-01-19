@@ -5,6 +5,9 @@
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
                 
+        <!-- Ensure Maven dependencies are deployed into WEB-INF/lib so Jakarta APIs are available at runtime -->
+        <wb-resource deploy-path="/WEB-INF/lib" source-path="/Maven Dependencies"/>
+                
         <property name="context-root" value="WachiturroBET"/>
                 
         <property name="java-output-path" value="/WachiturroBET/build/classes"/>

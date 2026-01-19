@@ -19,77 +19,99 @@ public class EventoJPADAO implements EventoDAO {
 
     @Override
     public String obtenerNombreEvento() {
-        // Ejemplo simple: retorna el primer nombre de evento encontrado
         TypedQuery<String> q = em.createQuery("SELECT e.nombre FROM Evento e", String.class);
         q.setMaxResults(1);
         return q.getResultList().stream().findFirst().orElse("Evento desconocido");
     }
+
     @Override
-    public java.util.List<Evento> obtenerTodosLosEventos() {
+    public List<Evento> obtenerTodosLosEventos() {
         TypedQuery<Evento> q = em.createQuery("SELECT e FROM Evento e", Evento.class);
         return q.getResultList();
     }
+
     @Override
     public Evento consultarDetallesEvento(int id) {
         return em.find(Evento.class, id);
     }
     
+    @Override
     public List<Evento> obtenerEventosDisponibles() {
-        String jpql = "SELECT e FROM Evento e ORDER BY e.fecha ASC";
+        String jpql = "SELECT e FROM Evento e WHERE e.estado = true ORDER BY e.fecha ASC";
         TypedQuery<Evento> query = em.createQuery(jpql, Evento.class);
         return query.getResultList();
     }
     
- // Paso 2.1: validarDatos
     public boolean validarDatos(String nombre, String descripcion, LocalDateTime fecha, TipoCategoria categoria) {
-        // 1. Validar campos obligatorios vacíos
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return false;
-        }
-        if (fecha == null) {
-            return false;
-        }
-        if (categoria == null) {
-            return false;
-        }
-
-        // 2. Regla de Negocio: No se pueden crear eventos en el pasado
-        if (fecha.isBefore(LocalDateTime.now())) {
-            return false;
-        }
-
+        if (nombre == null || nombre.trim().isEmpty()) return false;
+        if (fecha == null) return false;
+        if (categoria == null) return false;
+        if (fecha.isBefore(LocalDateTime.now())) return false;
         return true;
     }
 
-    // Paso 2.3: crearEvento
+    @Override
     public boolean crearEvento(Evento evento) {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            
-            // Aseguramos que el evento nazca "Abierto" (true) si no se ha seteado
-            evento.setEstado(true);
-            
+            if(!evento.isEstado()) evento.setEstado(true); // Por defecto activo
             em.persist(evento);
             tx.commit();
             return true;
         } catch (Exception e) {
-            if (tx.isActive()) {
-                tx.rollback();
-            }
+            if (tx.isActive()) tx.rollback();
             e.printStackTrace();
             return false;
         }
     }
- // 3.1: finalizarEvento
+    
+    // Método necesario para finalizar evento (lógica de negocio específica)
     public boolean finalizarEvento(Evento evento) {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            evento.setEstado(false); // false = Cerrado
+            evento.setEstado(false);
             em.merge(evento);
             tx.commit();
             return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // --- NUEVOS MÉTODOS PARA EL REST CRUD ---
+
+    @Override
+    public boolean actualizarEvento(Evento evento) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.merge(evento);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean eliminarEvento(int id) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Evento evento = em.find(Evento.class, id);
+            if (evento != null) {
+                em.remove(evento);
+                tx.commit();
+                return true;
+            }
+            tx.rollback();
+            return false;
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             e.printStackTrace();

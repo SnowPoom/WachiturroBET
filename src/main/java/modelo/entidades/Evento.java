@@ -3,22 +3,30 @@ package modelo.entidades;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @Entity
 @Table(name = "eventos")
+@XmlRootElement
 public class Evento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
-
+    
+    @Column(name = "nombre")
     private String nombre;
 
+    @Column(name = "fecha")
     private LocalDateTime fecha;
 
+    @Column(name = "categoria")
     private TipoCategoria categoria;
 
-    // Añadimos descripción según la especificación
+    @Column(name = "descripcion")
     private String descripcion;
+    
+    @Column(name = "estado")
     private boolean estado;
 
     public Evento() {}

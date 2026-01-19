@@ -14,5 +14,7 @@ public interface EventoDAO {
     // Retorna la lista de todos los eventos
     List<Evento> obtenerTodosLosEventos();
     
-    
+    boolean crearEvento(Evento evento);
+    boolean actualizarEvento(Evento evento);
+    boolean eliminarEvento(int id);
 }
