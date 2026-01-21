@@ -52,6 +52,24 @@ public class EventoJPADAO implements EventoDAO {
 
     @Override
     public boolean crearEvento(Evento evento) {
+    	// 1. Verificación de seguridad básica (evitar NullPointerException)
+        if (evento == null) {
+            return false;
+        }
+
+        // 2. Aplicamos tu método de validación extrayendo los datos del objeto
+        boolean datosValidos = validarDatos(
+            evento.getNombre(),
+            evento.getDescripcion(),
+            evento.getFecha(),
+            evento.getCategoria() // Asumo que tienes un getter para la categoría
+        );
+
+        // Si la validación falla, retornamos false inmediatamente sin tocar la BD
+        if (!datosValidos) {
+            System.out.println("Validación fallida: Datos incorrectos o fecha pasada.");
+            return false;
+        }
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -86,6 +104,23 @@ public class EventoJPADAO implements EventoDAO {
 
     @Override
     public boolean actualizarEvento(Evento evento) {
+    	// 1. Verificación de seguridad básica (evitar NullPointerException)
+        if (evento == null) {
+            return false;
+        }
+
+        // 2. Aplicamos tu método de validación extrayendo los datos del objeto
+        boolean datosValidos = validarDatos(
+            evento.getNombre(),
+            evento.getDescripcion(),
+            evento.getFecha(),
+            evento.getCategoria() // Asumo que tienes un getter para la categoría
+        );
+
+        // Si la validación falla, retornamos false inmediatamente sin tocar la BD
+        if (!datosValidos) {
+            return false;
+        }
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
