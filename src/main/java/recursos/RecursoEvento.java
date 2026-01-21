@@ -20,29 +20,24 @@ import modelo.entidades.Evento;
 @Path("/eventos")
 public class RecursoEvento {
 
+	private EventoJPADAO eventoDAO;
+	
+	public RecursoEvento() {
+		EntityManager em = JPAUtil.getEntityManager();
+		this.eventoDAO = new EventoJPADAO(em);
+	}
+	
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Evento> getEventos() {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            EventoJPADAO dao = new EventoJPADAO(em);
-            return dao.obtenerTodosLosEventos();
-        } finally {
-            em.close();
-        }
+    	return this.eventoDAO.obtenerTodosLosEventos();
     }
     
     @GET
     @Path("/{id}")
     @Produces({MediaType.APPLICATION_JSON})
     public Evento getEventoPorId(@PathParam("id") int id) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            EventoJPADAO dao = new EventoJPADAO(em);
-            return dao.consultarDetallesEvento(id);
-        } finally {
-            em.close();
-        }
+    	return this.eventoDAO.consultarDetallesEvento(id);
     }
     
     @POST
@@ -50,13 +45,7 @@ public class RecursoEvento {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public boolean guardarEvento(Evento evento) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            EventoJPADAO dao = new EventoJPADAO(em);
-            return dao.crearEvento(evento);
-        } finally {
-            em.close();
-        }
+    	return this.eventoDAO.crearEvento(evento);
     }
     
     @PUT
@@ -64,25 +53,13 @@ public class RecursoEvento {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public boolean actualizarEvento(Evento evento) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            EventoJPADAO dao = new EventoJPADAO(em);
-            return dao.actualizarEvento(evento);
-        } finally {
-            em.close();
-        }
+    	return this.eventoDAO.actualizarEvento(evento);
     }
     
     @DELETE
     @Path("/delete/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public boolean eliminarEvento(@PathParam("id") int id) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            EventoJPADAO dao = new EventoJPADAO(em);
-            return dao.eliminarEvento(id);
-        } finally {
-            em.close();
-        }
+    	return this.eventoDAO.eliminarEvento(id);
     }
 }
