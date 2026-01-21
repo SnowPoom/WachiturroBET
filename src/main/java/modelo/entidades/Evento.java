@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import jakarta.persistence.*;
 import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
+import jakarta.json.bind.annotation.JsonbTransient;
 
 @Entity
 @Table(name = "eventos")
@@ -86,6 +88,7 @@ public class Evento {
 		this.estado = estado;
 	}
 
+    @JsonbTransient
     public String getFechaFormateada() {
         if (this.fecha == null) return "-";
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");

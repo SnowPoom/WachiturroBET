@@ -34,7 +34,7 @@ public class RecursoEvento {
     
     @GET
     @Path("/{id}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON})
     public Evento getEventoPorId(@PathParam("id") int id) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
