@@ -135,7 +135,7 @@
                     
                     <div class="card-content">
                         <div class="grid-2" style="gap: 0.5rem;">
-                            <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=seleccionarEvento&id=${evento.id}" 
+                            <a href="${pageContext.request.contextPath}/ApuestaController?ruta=seleccionarEvento&id=${evento.id}" 
                                class="btn btn-outline" 
                                style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%;">
                                 

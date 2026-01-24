@@ -24,59 +24,42 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-@WebServlet("/apuesta")
+@WebServlet("/ApuestaController")
 public class ApuestaController extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Soporta la acción seleccionarEvento
-        String action = req.getParameter("action");
-        if ("seleccionarEvento".equalsIgnoreCase(action)) {
-            seleccionarEvento(req, resp);
-            return;
-        }
-        resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        ruteador(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String action = req.getParameter("action");
-        if ("ingresarMonto".equalsIgnoreCase(action)) {
-            ingresarMonto(req, resp);
-            return;
-        }
-        resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+   	 	ruteador(req, resp);
     }
 
+    private void ruteador(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String action = req.getParameter("ruta");
+		if ("seleccionarEvento".equalsIgnoreCase(action)) {
+			seleccionarEvento(req, resp);
+		} else if ("ingresarMonto".equalsIgnoreCase(action)) {
+			ingresarMonto(req, resp);
+		} else {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+		}
+	}
+    
     private void seleccionarEvento(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    	String idStr = req.getParameter("id");
         EntityManager em = JPAUtil.getEntityManager();
-        try {
-            String idStr = req.getParameter("idEvento");
-            if (idStr == null) {
-                resp.sendRedirect(req.getContextPath() + "/jsp/index.jsp");
-                return;
-            }
-            int id = Integer.parseInt(idStr);
-            EventoJPADAO eventoDAO = new EventoJPADAO(em);
-            PronosticoJPADAO pronosticoDAO = new PronosticoJPADAO(em);
 
-            // Obtener detalles evento
-            Evento evento = eventoDAO.consultarDetallesEvento(id);
-            // Obtener pronosticos
-            List<Pronostico> pronosticos = pronosticoDAO.obtenerPronosticosPorEvento(evento);
+        int id = Integer.parseInt(idStr);
+        EventoJPADAO eventoDAO = new EventoJPADAO(em);
+        Evento evento = eventoDAO.consultarDetallesEvento(id);
 
-            req.setAttribute("eventoDetalle", evento);
-            req.setAttribute("pronosticos", pronosticos);
-
-            RequestDispatcher rd = req.getRequestDispatcher("/jsp/detalleEvento.jsp");
-            rd.forward(req, resp);
-        } catch (NumberFormatException nfe) {
-            resp.sendRedirect(req.getContextPath() + "/jsp/index.jsp");
-        } finally {
-            em.close();
-        }
+        req.setAttribute("eventoDetalle", evento);
+        req.getRequestDispatcher("/jsp/detalleEvento.jsp").forward(req, resp);
     }
 
     private void ingresarMonto(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

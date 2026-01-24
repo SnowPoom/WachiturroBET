@@ -2,6 +2,8 @@ package modelo.entidades;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import jakarta.persistence.*;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
@@ -30,6 +32,10 @@ public class Evento {
     
     @Column(name = "estado")
     private boolean estado;
+    
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Pronostico> pronosticos;
+   
 
     public Evento() {}
 
@@ -87,11 +93,24 @@ public class Evento {
 	public void setEstado(boolean estado) {
 		this.estado = estado;
 	}
+	
+    public List<Pronostico> getPronosticos() {
+		return pronosticos;
+	}
 
-    @JsonbTransient
+	public void setPronosticos(List<Pronostico> pronosticos) {
+		this.pronosticos = pronosticos;
+	}
+
+	@JsonbTransient
     public String getFechaFormateada() {
         if (this.fecha == null) return "-";
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         return this.fecha.format(fmt);
     }
+    
+    @Override
+    public String toString() {
+		return "Evento [id=" + id + ", nombre=" + nombre + ", fecha=" + fecha + ", categoria=" + categoria + "]";
+	}
 }

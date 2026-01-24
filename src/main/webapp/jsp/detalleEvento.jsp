@@ -54,7 +54,7 @@
                 <input type="number" name="monto" class="input margin" placeholder="0.00" step="0.01" required style="height:2.2rem; width: 200px;">
 
                 <div class="grid-2" style="margin-top: 1rem;">
-                    <c:forEach var="p" items="${pronosticos}">
+                    <c:forEach var="p" items="${eventoDetalle.pronosticos}">
                         <div>
                             <label class="card-desc">${p.descripcion}</label>
                             <div class="flex-center" style="gap: 0.5rem; margin-top: 0.5rem;">
