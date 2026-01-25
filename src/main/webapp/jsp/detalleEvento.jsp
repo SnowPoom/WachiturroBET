@@ -48,8 +48,8 @@
 
         <div class="card-content">
             <label class="card-desc">Monto:</label>
-            <form action="${pageContext.request.contextPath}/apuesta" method="post">
-                <input type="hidden" name="action" value="ingresarMonto" />
+            <form action="${pageContext.request.contextPath}/ApuestaController" method="post">
+                <input type="hidden" name="ruta" value="ingresarMonto" />
                 <input type="hidden" name="idEvento" value="${eventoDetalle.id}" />
                 <input type="number" name="monto" class="input margin" placeholder="0.00" step="0.01" required style="height:2.2rem; width: 200px;">
 

@@ -44,7 +44,7 @@ public class ApuestaController extends HttpServlet {
 		if ("seleccionarEvento".equalsIgnoreCase(action)) {
 			seleccionarEvento(req, resp);
 		} else if ("ingresarMonto".equalsIgnoreCase(action)) {
-			ingresarMonto(req, resp);
+			registrarMonto(req, resp);
 		} else {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		}
@@ -62,25 +62,24 @@ public class ApuestaController extends HttpServlet {
         req.getRequestDispatcher("/jsp/detalleEvento.jsp").forward(req, resp);
     }
 
-    private void ingresarMonto(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void registrarMonto(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             HttpSession session = req.getSession(false);
             if (session == null || session.getAttribute("currentUser") == null) {
                 session = req.getSession(true);
                 session.setAttribute("flash_status", "ERROR");
-                session.setAttribute("flash_message", "Usuario no autentiaacado.");
+                session.setAttribute("flash_message", "Usuario no autenticado.");
                 resp.sendRedirect(req.getContextPath() + "/jsp/login.jsp");
                 return;
             }
 
             UsuarioRegistrado usuario = (UsuarioRegistrado) session.getAttribute("currentUser");
-            // Reload managed user with current EM to avoid detached issues
             usuario = em.find(UsuarioRegistrado.class, usuario.getId());
 
             String montoStr = req.getParameter("monto");
             String idPronosticoStr = req.getParameter("idPronostico");
-            String idEventoStr = req.getParameter("idEvento");
+            String idEventoStr = req.getParameter("idEvento"); 
 
             Double monto = null;
             try {
@@ -92,30 +91,33 @@ public class ApuestaController extends HttpServlet {
                     monto = bd.doubleValue();
                 }
             } catch (Exception e) { monto = null; }
+            
+            
 
-            // Validación 1: monto > 0
-            if (monto == null || monto <= 0) {
+            // Validación 1: monto inválido
+            if (!esMontoValido(monto)) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_operacion", "APOSTAR");
                 session.setAttribute("flash_message", "mostrarMontoInvalido");
-                // PRG: redirigir al detalle del evento para mostrar el mensaje
-                String redirectUrl = req.getContextPath() + "/apuesta?action=seleccionarEvento";
-                if (idEventoStr != null) redirectUrl += "&idEvento=" + idEventoStr;
+                
+                
+                String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
+                if (idEventoStr != null) redirectUrl += "&id=" + idEventoStr; 
                 resp.sendRedirect(redirectUrl);
                 return;
             }
 
-            // Validación 2: existen fondos
+            // Validación 2: fondos insuficientes
             BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
             boolean tieneFondos = billeteraDAO.existenFondosValidos(usuario, monto);
             if (!tieneFondos) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_operacion", "APOSTAR");
                 session.setAttribute("flash_message", "mostrarFondosInsuficientes");
-                // Mantener comportamiento consistente con la validación de monto:
-                // redirigir al detalle del evento para mostrar el mensaje de error en la misma vista.
-                String redirectUrl = req.getContextPath() + "/apuesta?action=seleccionarEvento";
-                if (idEventoStr != null) redirectUrl += "&idEvento=" + idEventoStr;
+                
+                
+                String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
+                if (idEventoStr != null) redirectUrl += "&id=" + idEventoStr;
                 resp.sendRedirect(redirectUrl);
                 return;
             }
@@ -125,53 +127,53 @@ public class ApuestaController extends HttpServlet {
             if (idPronosticoStr != null) {
                 try {
                     int pid = Integer.parseInt(idPronosticoStr);
-                    // Suponiendo que Pronostico es una entidad mapeada
                     pronostico = em.find(Pronostico.class, pid);
                 } catch (NumberFormatException ignored) {}
             }
 
             ApuestaJPADAO apuestaDAO = new ApuestaJPADAO(em);
-            // La lógica de deduct y persist del movimiento ahora se realiza en apostar() dentro de ApuestaJPADAO
-            apuestaDAO.apostar(monto, pronostico, usuario);
+            apuestaDAO.guardarMovimiento(monto, pronostico, usuario);
 
-            // Actualizar saldo en la sesión consultando la billetera en este EM
             try {
                 TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
                 q.setParameter("uid", usuario.getId());
                 Double saldo = q.getSingleResult();
                 session.setAttribute("currentUserSaldo", saldo != null ? saldo : 0.0);
             } catch (Exception ex) {
-                // ignorar, no crítico
                 ex.printStackTrace();
             }
 
-            // Si llegamos aquí, la transacción dentro de apostar fue exitosa
-
-            // Finalmente redirigir confirmación
             session.setAttribute("flash_status", "OK");
-            session.setAttribute("flash_operacion", "APOSTA");
+            session.setAttribute("flash_operacion", "APOSTAR");
             session.setAttribute("flash_message", "Apuesta realizada correctamente");
-            // PRG: redirigir al detalle del mismo evento para mostrar confirmación
-            String redirectUrl = req.getContextPath() + "/apuesta?action=seleccionarEvento";
-            if (idEventoStr != null) redirectUrl += "&idEvento=" + idEventoStr;
+            
+            
+            String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
+            if (idEventoStr != null) redirectUrl += "&id=" + idEventoStr;
             resp.sendRedirect(redirectUrl);
 
         } catch (IllegalStateException ise) {
-            // Fondos insuficientes realizado en la capa DAO
             HttpSession session = req.getSession();
             session.setAttribute("flash_status", "ERROR");
             session.setAttribute("flash_operacion", "APOSTAR");
             session.setAttribute("flash_message", "mostrarFondosInsuficientes");
-            String redirectUrl = req.getContextPath() + "/apuesta?action=seleccionarEvento";
-            if (req.getParameter("idEvento") != null) redirectUrl += "&idEvento=" + req.getParameter("idEvento");
+            
+            
+            String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
+            if (req.getParameter("idEvento") != null) redirectUrl += "&id=" + req.getParameter("idEvento");
             resp.sendRedirect(redirectUrl);
             return;
         } catch (Exception e) {
             e.printStackTrace();
-            // En caso de error inesperado, redirigir al index
             resp.sendRedirect(req.getContextPath() + "/jsp/index.jsp");
         } finally {
             em.close();
         }
+        
+  
+    }
+    
+    public boolean esMontoValido(Double monto) {
+    	return monto != null && monto > 0;
     }
 }

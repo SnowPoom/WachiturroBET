@@ -11,5 +11,5 @@ public interface ApuestaDAO {
 
     List<Apuesta> filtrar(LocalDateTime fechaInicio, LocalDateTime fechaFin, String estado);
 
-    void apostar(double monto, Pronostico pronostico, UsuarioRegistrado usuario);
+    void guardarMovimiento(double monto, Pronostico pronostico, UsuarioRegistrado usuario);
 }

@@ -55,7 +55,7 @@ public class ApuestaJPADAO implements ApuestaDAO {
     }
  // --- MÉTODO CORREGIDO ---
     @Override
-    public void apostar(double monto, Pronostico pronostico, UsuarioRegistrado usuario) {
+    public void guardarMovimiento(double monto, Pronostico pronostico, UsuarioRegistrado usuario) {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
