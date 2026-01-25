@@ -43,17 +43,17 @@
 
     <header class="navbar">
         <div class="container nav-content">
-            <a href="ListarEventosController?ruta=entrar" class="logo">
+            <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar"  class="logo">
                 <div class="logo-icon"><img src="${pageContext.request.contextPath}/jsp/image.png" alt="icon"></div>
                 <span>WachiturroBet</span>
             </a>
             
             <div class="flex-center gap-2">
-                <a href="billetera.jsp" class="btn btn-ghost" style="background-color: rgba(168, 85, 247, 0.2);" title="Cartera">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                </a>
-                <a href="profile.jsp" class="btn btn-ghost" title="Perfil">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar" class="btn btn-ghost">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:1.2em; height:1.2em; margin-right:0.5rem; vertical-align: bottom;">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Volver
                 </a>
             </div>
         </div>
@@ -196,48 +196,6 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Historial de Transacciones</h3>
-                <p class="card-desc">Todas tus transacciones recientes</p>
-            </div>
-            <div class="card-content">
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <div class="flex-between" style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 0.5rem;">
-                        <div class="flex-center gap-4">
-                            <div style="padding: 0.5rem; background: rgba(34, 197, 94, 0.2); border-radius: 0.5rem;">
-                                <svg class="icon" style="color: #4ade80;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>
-                            </div>
-                            <div>
-                                <div style="font-weight: 500;">Tarjeta</div>
-                                <div class="card-desc" style="font-size: 0.8rem;">22 Nov 2024, 10:30</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div style="color: #4ade80;">+500</div>
-                            <span class="badge badge-purple" style="font-size: 0.7rem;">Completado</span>
-                        </div>
-                    </div>
-                    <div class="flex-between" style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 0.5rem;">
-                        <div class="flex-center gap-4">
-                            <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.5rem;">
-                                <svg class="icon" style="color: #f87171;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/><path d="M12 8v8"/></svg>
-                            </div>
-                            <div>
-                                <div style="font-weight: 500;">Transferencia</div>
-                                <div class="card-desc" style="font-size: 0.8rem;">21 Nov 2024, 15:45</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div style="color: #f87171;">-200</div>
-                            <span class="badge badge-purple" style="font-size: 0.7rem;">Completado</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
 
     <script>
         function switchTab(tabName) {

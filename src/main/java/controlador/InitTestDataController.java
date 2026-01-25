@@ -2,8 +2,8 @@ package controlador;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.TypedQuery;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,11 +11,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import modelo.dao.JPAUtil;
+import modelo.entidades.Administrador;
+import modelo.entidades.Billetera;
 import modelo.entidades.Evento;
 import modelo.entidades.Pronostico;
 import modelo.entidades.TipoCategoria;
 import modelo.entidades.UsuarioRegistrado;
-import modelo.entidades.Billetera;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -28,82 +29,46 @@ public class InitTestDataController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = null;
+
         try {
-            // --- LÓGICA NUEVA: CAMBIO DE SESIÓN ---
-            // Si recibimos el parámetro forceUser, limpiamos la sesión (sacamos al Admin)
+            // 1. Limpieza de sesión si se solicita (para pruebas)
             if ("true".equals(req.getParameter("forceUser"))) {
                 HttpSession session = req.getSession(false);
                 if (session != null) {
-                    session.removeAttribute("currentUser");
-                    session.removeAttribute("currentUserId");
+                    session.invalidate(); // Mata la sesión completa
                 }
             }
-            // --------------------------------------
 
-            // 1. Verificar si ya existen eventos
+            // 2. Verificar si ya existen datos para no duplicar
             TypedQuery<Long> q = em.createQuery("SELECT COUNT(e) FROM Evento e", Long.class);
             Long count = q.getSingleResult();
-            
-            // Si ya hay datos, aseguramos el usuario y redirigimos
+
             if (count != null && count > 0) {
-                ensureTestUser(req, em);
-                // Redirigimos al Home del Usuario
-                resp.sendRedirect(req.getContextPath() + "/index.jsp"); 
+                // Si ya hay eventos, solo aseguramos que los usuarios existan y redirigimos
+                verificarYCrearUsuarios(em);
+                resp.sendRedirect(req.getContextPath() + "/jsp/login.jsp");
                 return;
             }
 
+            // 3. Crear datos iniciales
             tx = em.getTransaction();
             tx.begin();
 
             System.out.println("--- INICIANDO CREACIÓN DE DATOS DE PRUEBA ---");
 
-            // --- EVENTO 1: FÚTBOL ---
-            crearEventoCompleto(em, 
-                "Real Madrid vs FC Barcelona", 
-                "La Liga - Jornada 32. El clásico español decisivo por el título.",
-                LocalDateTime.now().plusDays(2), 
-                TipoCategoria.DEPORTES,
-                new Object[][] {
-                    {"Gana Real Madrid", 2.15},
-                    {"Empate", 3.40},
-                    {"Gana Barcelona", 3.00}
-                }
-            );
+            // --- EVENTOS ---
+            crearEventosIniciales(em);
 
-            // --- EVENTO 2: E-SPORTS ---
-            crearEventoCompleto(em, 
-                "T1 vs Gen.G - Worlds Final", 
-                "Gran Final del Campeonato Mundial de League of Legends 2026.",
-                LocalDateTime.now().plusDays(5),
-                TipoCategoria.ESPORTS,
-                new Object[][] {
-                    {"Gana T1 (Faker)", 1.65},
-                    {"Gana Gen.G", 2.20}
-                }
-            );
+            tx.commit(); // Hacemos commit de los eventos primero
 
-            // --- EVENTO 3: TENIS ---
-            crearEventoCompleto(em, 
-                "Alcaraz vs Sinner", 
-                "Final de Roland Garros. Duelo de la nueva generación.",
-                LocalDateTime.now().plusDays(1),
-                TipoCategoria.DEPORTES,
-                new Object[][] {
-                    {"Gana Alcaraz", 1.85},
-                    {"Gana Sinner", 1.85},
-                    {"Más de 3.5 Sets", 1.40}
-                }
-            );
+            // 4. Crear Usuarios (Manejamos su propia transacción dentro del método o reusamos)
+            verificarYCrearUsuarios(em);
 
-            tx.commit();
             System.out.println("--- DATOS CREADOS CORRECTAMENTE ---");
 
-            // Aseguramos usuario de prueba
-            ensureTestUser(req, em);
+            // Redirigir al login
+            resp.sendRedirect(req.getContextPath() + "/jsp/login.jsp");
 
-            // Redirigir al Home del Usuario
-            resp.sendRedirect(req.getContextPath() + "/index.jsp");
-            
         } catch (Exception e) {
             if (tx != null && tx.isActive()) tx.rollback();
             e.printStackTrace();
@@ -113,16 +78,127 @@ public class InitTestDataController extends HttpServlet {
         }
     }
 
+    // --- MÉTODOS AUXILIARES DE CREACIÓN DE ENTIDADES ---
+
+    private void verificarYCrearUsuarios(EntityManager em) {
+        // Creamos el Usuario Normal (Apostador)
+        crearUsuarioRegistradoSiNoExiste(em, "user@test.com", "User", "Prueba", "1234");
+        
+        // Creamos el Administrador
+        crearAdministradorSiNoExiste(em, "admin@test.com", "Admin", "Sistema", "1234");
+    }
+
+    private void crearUsuarioRegistradoSiNoExiste(EntityManager em, String correo, String nombre, String apellido, String clave) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            // Verificar si existe
+            TypedQuery<Long> q = em.createQuery("SELECT COUNT(u) FROM UsuarioRegistrado u WHERE u.correo = :correo", Long.class);
+            q.setParameter("correo", correo);
+            if (q.getSingleResult() > 0) return;
+
+            // Si no existe, crear
+            if (!tx.isActive()) tx.begin();
+
+            UsuarioRegistrado u = new UsuarioRegistrado();
+            u.setNombre(nombre);
+            u.setApellido(apellido);
+            u.setCorreo(correo);
+            u.setClave(clave);
+            em.persist(u);
+
+            // Crear Billetera para el usuario registrado
+            Billetera b = new Billetera();
+            b.setSaldo(5000.0); // Saldo inicial de prueba
+            b.setUsuario(u);
+            em.persist(b);
+
+            tx.commit();
+            System.out.println("Usuario Registrado creado: " + correo);
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+        }
+    }
+
+    private void crearAdministradorSiNoExiste(EntityManager em, String correo, String nombre, String apellido, String clave) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            // Verificar si existe
+            TypedQuery<Long> q = em.createQuery("SELECT COUNT(a) FROM Administrador a WHERE a.correo = :correo", Long.class);
+            q.setParameter("correo", correo);
+            if (q.getSingleResult() > 0) return;
+
+            // Si no existe, crear
+            if (!tx.isActive()) tx.begin();
+
+            Administrador admin = new Administrador();
+            admin.setNombre(nombre);
+            admin.setApellido(apellido);
+            admin.setCorreo(correo);
+            admin.setClave(clave);
+            // Nota: El administrador generalmente no lleva Billetera en este modelo
+            em.persist(admin);
+
+            tx.commit();
+            System.out.println("Administrador creado: " + correo);
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+        }
+    }
+
+    private void crearEventosIniciales(EntityManager em) {
+        // Evento 1: Fútbol
+        crearEventoCompleto(em,
+            "Real Madrid vs FC Barcelona",
+            "La Liga - Jornada 32. El clásico español decisivo por el título.",
+            LocalDateTime.now().plusDays(2),
+            TipoCategoria.DEPORTES,
+            new Object[][] {
+                {"Gana Real Madrid", 2.15},
+                {"Empate", 3.40},
+                {"Gana Barcelona", 3.00}
+            }
+        );
+
+        // Evento 2: E-Sports
+        crearEventoCompleto(em,
+            "T1 vs Gen.G - Worlds Final",
+            "Gran Final del Campeonato Mundial de League of Legends 2026.",
+            LocalDateTime.now().plusDays(5),
+            TipoCategoria.ESPORTS,
+            new Object[][] {
+                {"Gana T1 (Faker)", 1.65},
+                {"Gana Gen.G", 2.20}
+            }
+        );
+
+        // Evento 3: Tenis
+        crearEventoCompleto(em,
+            "Alcaraz vs Sinner",
+            "Final de Roland Garros. Duelo de la nueva generación.",
+            LocalDateTime.now().plusDays(1),
+            TipoCategoria.DEPORTES,
+            new Object[][] {
+                {"Gana Alcaraz", 1.85},
+                {"Gana Sinner", 1.85},
+                {"Más de 3.5 Sets", 1.40}
+            }
+        );
+    }
+
     private void crearEventoCompleto(EntityManager em, String nombre, String desc, LocalDateTime fecha, TipoCategoria cat, Object[][] datosPronosticos) {
         Evento ev = new Evento();
         ev.setNombre(nombre);
         ev.setDescripcion(desc);
         ev.setFecha(fecha);
         ev.setCategoria(cat);
-        // Por defecto estado = true (Abierto)
-        ev.setEstado(true); 
+        ev.setEstado(true);
         em.persist(ev);
-        em.flush(); 
+        // Hacemos flush para obtener el ID del evento antes de guardar pronósticos
+        em.flush();
 
         for (Object[] datos : datosPronosticos) {
             String descripcionPronostico = (String) datos[0];
@@ -134,64 +210,6 @@ public class InitTestDataController extends HttpServlet {
             p.setEvento(ev);
             p.setEsGanador(false);
             em.persist(p);
-        }
-    }
-
-    public static void ensureTestUser(HttpServletRequest req, EntityManager em) {
-        HttpSession session = req.getSession(true);
-        // Si ya hay alguien logueado (y no lo borramos antes), no hacemos nada
-        if (session.getAttribute("currentUser") != null) return;
-
-        final String testEmail = "test@example.com";
-        EntityTransaction tx = null;
-        UsuarioRegistrado usuario = null;
-        try {
-            TypedQuery<UsuarioRegistrado> q = em.createQuery("SELECT u FROM UsuarioRegistrado u WHERE u.correo = :correo", UsuarioRegistrado.class);
-            q.setParameter("correo", testEmail);
-            try {
-                usuario = q.getSingleResult();
-            } catch (NoResultException nre) {
-                tx = em.getTransaction();
-                tx.begin();
-                usuario = new UsuarioRegistrado();
-                usuario.setNombre("Usuario");
-                usuario.setApellido("Prueba");
-                usuario.setCorreo(testEmail);
-                usuario.setClave("password");
-                em.persist(usuario);
-
-                Billetera billetera = new Billetera();
-                billetera.setSaldo(5000.0); 
-                billetera.setUsuario(usuario);
-                em.persist(billetera);
-                em.flush();
-                tx.commit();
-            }
-
-            if (usuario != null) {
-                // Refrescamos la entidad para evitar problemas de detached
-                UsuarioRegistrado managedUser = em.find(UsuarioRegistrado.class, usuario.getId());
-                actualizarSaldoEnSesion(session, managedUser, em);
-                session.setAttribute("currentUser", managedUser);
-                session.setAttribute("currentUserId", managedUser.getId());
-            }
-        } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
-            e.printStackTrace();
-        }
-    }
-
-    public static void actualizarSaldoEnSesion(HttpSession session, UsuarioRegistrado usuario, EntityManager em) {
-        if (session != null) {
-            try {
-                em.getEntityManagerFactory().getCache().evictAll();
-                TypedQuery<Double> q = em.createQuery("SELECT b.saldo FROM Billetera b WHERE b.usuario.id = :uid", Double.class);
-                q.setParameter("uid", usuario.getId());
-                Double saldo = q.getSingleResult();
-                session.setAttribute("currentUserSaldo", saldo != null ? saldo : 0.0);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 }

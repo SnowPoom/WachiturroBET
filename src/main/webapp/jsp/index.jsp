@@ -28,14 +28,8 @@
 			</div>
 
             <div class="flex-center gap-2">
-                <a href="${pageContext.request.contextPath}/adminLogin" class="btn btn-ghost" 
-                   style="color: #ec4899; border: 1px dashed rgba(236, 72, 153, 0.5); margin-right: 10px;" 
-                   title="Switch to Admin Session">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                    Modo Admin
-                </a>
-                <a href="${pageContext.request.contextPath}/recargarBilletera" class="btn btn-outline">Billetera</a>
-                <a href="${pageContext.request.contextPath}/historial" class="btn btn-outline">Historial</a>
+                 <a href="${pageContext.request.contextPath}/recargarBilletera" class="btn btn-outline">Billetera</a>
+                 <a href="${pageContext.request.contextPath}/historial" class="btn btn-outline">Historial</a>
                  
                 <% if (session.getAttribute("currentUser") == null) { %>
                     <a href="jsp/login.jsp" class="btn btn-outline">Ingresar</a>
@@ -158,18 +152,20 @@
         </div>
     </div>
     <script>
-    	(function() {
-        	// Solo intentamos inicializar si no estamos ya en el proceso
-        	// Hacemos una petición silenciosa (fetch)
-        	fetch('${pageContext.request.contextPath}/initTestData')
-            	.then(response => {
-                	console.log("Datos verificados/inicializados");
-                	// Opcional: Recargar si la lista estaba vacía
-            	})
-            	.catch(error => console.log("Error inicializando datos", error));
-    	})();
-    	
-    	function handleSearch(event) {
+     	(function() {
+        	// Si no hay usuario en sesión, redirigimos al servlet que inicializa datos
+        	// (InitTestDataController redirige luego al login). Si ya hay sesión,
+        	// simplemente verificamos en background con fetch.
+        	<% if (session.getAttribute("currentUser") == null) { %>
+        		window.location.replace('${pageContext.request.contextPath}/initTestData');
+        	<% } else { %>
+        		fetch('${pageContext.request.contextPath}/initTestData')
+        			.then(response => { console.log("Datos verificados/inicializados"); })
+        			.catch(error => console.log("Error inicializando datos", error));
+        	<% } %>
+     	})();
+     	
+     	function handleSearch(event) {
             // Detectar si la tecla presionada es ENTER (Código 13)
             if (event.key === 'Enter' || event.keyCode === 13) {
                 const texto = document.getElementById('searchInput').value;

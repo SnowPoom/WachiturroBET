@@ -23,14 +23,7 @@
                 <span>WachiturroBet Admin</span>
             </a>
             <div class="flex-center gap-2">
-                <a href="${pageContext.request.contextPath}/initTestData?forceUser=true" class="btn btn-ghost" 
-                   style="color: #4ade80; border: 1px dashed rgba(74, 222, 128, 0.5); margin-right: 10px;" 
-                   title="Cambiar a sesión de Usuario">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    Modo Usuario
-                </a>
-                
-                <a href="profile.jsp" class="btn btn-ghost">Salir</a>
+                <a href="profile.jsp" class="btn btn-outline">CerrarSesión</a>
             </div>
         </div>
     </header>
