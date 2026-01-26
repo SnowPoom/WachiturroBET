@@ -60,7 +60,6 @@
                 <svg class="icon" style="width: 2.5rem; height: 2.5rem; color: var(--color-purple);" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 Historial de Apuestas
             </h1>
-            <p class="card-desc">Consulta el estado y resultados de tus predicciones</p>
         </div>
 
         <div class="card mb-8">
@@ -109,7 +108,6 @@
             <div class="card-header flex-between">
                 <div>
                     <h3 class="card-title">Listado de Apuestas</h3>
-                    <p class="card-desc">Mostrando tus últimos movimientos</p>
                 </div>
                 <span class="badge badge-purple">
                     Total: ${not empty apuestas ? apuestas.size() : 0}
@@ -205,12 +203,6 @@
             <c:if test="${not empty apuestas}">
                 <div class="card-footer border-top" style="border-top: 1px solid var(--color-border); flex-direction: row; justify-content: space-between; align-items: center;">
                     <span class="card-desc">Mostrando ${apuestas.size()} resultados</span>
-                    <div class="flex-center gap-2">
-                        <button class="btn btn-ghost" style="padding: 0.25rem 0.5rem;" disabled>&lt;</button>
-                        <button class="btn btn-ghost" style="padding: 0.25rem 0.5rem; background: rgba(168,85,247,0.2);">1</button>
-                        <button class="btn btn-ghost" style="padding: 0.25rem 0.5rem;">2</button>
-                        <button class="btn btn-ghost" style="padding: 0.25rem 0.5rem;" disabled>&gt;</button>
-                    </div>
                 </div>
             </c:if>
         </div>

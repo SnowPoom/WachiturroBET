@@ -66,7 +66,6 @@
                 <svg class="icon" style="width: 2.5rem; height: 2.5rem; color: var(--color-purple);" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 Mi Cartera
             </h1>
-            <p class="card-desc">Gestiona tus fondos y transacciones</p>
         </div>
 
         <%-- LÓGICA AGREGADA: Manejo de mensajes Flash (Post-Redirect-Get) --%>
@@ -118,7 +117,7 @@
         %>
 
         <div class="card" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)); border-color: rgba(168, 85, 247, 0.3);">
-            <div class="card-content text-center" style="padding-top: 2rem; padding-bottom: 2rem;">
+            <div class="card-content text-center" style="padding-top: 2rem;">
                 <div class="card-desc" style="color: #e2e8f0;">Saldo Disponible</div>
                 <div style="font-size: 3.5rem; font-weight: bold; margin: 1rem 0;">$<%= sessionSaldoObj != null ? sessionSaldoObj : 2450.0 %></div>
             </div>

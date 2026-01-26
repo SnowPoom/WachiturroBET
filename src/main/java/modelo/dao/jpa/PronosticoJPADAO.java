@@ -19,7 +19,8 @@ public class PronosticoJPADAO implements PronosticoDAO {
     @Override
     public List<Pronostico> obtenerPronosticosPorEvento(Evento evento) {
         // Implementación simple asumiendo que existe una entidad Pronostico mapeada
-        TypedQuery<Pronostico> q = em.createQuery("SELECT p FROM Pronostico p WHERE p.evento.id = :eid", Pronostico.class);
+        // Ordenamos por id ascendente para asegurar orden consistente en la UI
+        TypedQuery<Pronostico> q = em.createQuery("SELECT p FROM Pronostico p WHERE p.evento.id = :eid ORDER BY p.id ASC", Pronostico.class);
         q.setParameter("eid", evento.getId());
         return q.getResultList();
     }

@@ -53,17 +53,25 @@
                 <input type="hidden" name="idEvento" value="${eventoDetalle.id}" />
                 <input type="number" name="monto" class="input margin" placeholder="0.00" step="0.01" required style="height:2.2rem; width: 200px;">
 
-                <div class="grid-2" style="margin-top: 1rem;">
+                <div class="grid-2" style="margin-top: 1rem; column-gap: 2rem; row-gap: 0.8rem;">
                     <c:forEach var="p" items="${eventoDetalle.pronosticos}">
-                        <div>
-                            <label class="card-desc">${p.descripcion}</label>
-                            <div class="flex-center" style="gap: 0.5rem; margin-top: 0.5rem;">
-                                <input type="radio" name="idPronostico" value="${p.id}" required />
-                                <button type="submit" class="btn btn-outline" style="flex-direction: column; padding: 0.75rem;">
+                        
+                        <div style="display: flex; align-items: center; padding: 0.35rem 0;">
+                            
+                            <div style="flex: 0 0 40%; display: flex; align-items: center; gap: 0.5rem; padding-right: 0.5rem;">
+                                <input type="radio" id="idPronostico-${p.id}" name="idPronostico" value="${p.id}" required style="cursor: pointer; flex-shrink: 0;" />
+                                <label for="idPronostico-${p.id}" style="margin: 0; cursor: pointer; font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${p.descripcion}
+                                </label>
+                            </div>
+                    
+                            <div style="flex: 1;">
+                                <button type="submit" class="btn btn-outline" style="width: 140px; padding: 0.3rem 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; font-size: 0.9rem;">
                                     <span>Apostar</span>
-                                    <span class="text-purple font-bold">${p.cuotaActual}</span>
+                                    <span class="text-purple font-bold" style="margin-left: 0.4rem;">${p.cuotaActual}</span>
                                 </button>
                             </div>
+                            
                         </div>
                     </c:forEach>
                 </div>
@@ -74,7 +82,7 @@
                     <svg class="icon" viewBox="0 0 24 24" style="width:1.2em; height:1.2em; margin-right:0.5rem; vertical-align: bottom;">
                         <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Volver a la Lista
+                    Volver
                 </a>
             </div>
             </div>

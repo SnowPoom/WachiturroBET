@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import jakarta.persistence.*;
+import jakarta.persistence.OrderBy;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.json.bind.annotation.JsonbTransient;
@@ -34,6 +35,7 @@ public class Evento {
     private boolean estado;
     
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
     private List<Pronostico> pronosticos;
    
 

@@ -23,7 +23,7 @@
                     <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
                 </svg>
                 <input type="text" id="searchInput" class="input input-search" 
-                    placeholder="Buscar eventos, equipos o ligas..."
+                    placeholder="Buscar eventos o equipos..."
                     onkeypress="handleSearch(event)">
             </div>
 
@@ -33,13 +33,8 @@
             </div>
 
             <div class="flex-center gap-2">
-                <% if (session.getAttribute("currentUser") == null) { %>
-                    <a href="jsp/login.jsp" class="btn btn-outline">Ingresar</a>
-                    <a href="jsp/register.jsp" class="btn btn-primary">Registro</a>
-                <% } else { %>
-                     <span class="text-purple">Hola, ${currentUser.nombre}</span>
-                     <a href="${pageContext.request.contextPath}/LogoutController" class="btn btn-ghost" style="color: #f87171; border: 1px solid rgba(248,113,113,0.3);">Cerrar Sesión</a>
-                <% } %>
+                <span class="text-purple">Hola, ${currentUser.nombre}</span>
+                <a href="${pageContext.request.contextPath}/LogoutController" class="btn btn-ghost" style="color: #f87171; border: 1px solid rgba(248,113,113,0.3);">Cerrar Sesión</a>
             </div>
         </div>
     </header>
@@ -76,8 +71,7 @@
                                class="btn btn-outline" 
                                style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%;">
                                 
-                                <span>Ver</span>
-                                <span class="text-purple font-bold">Ver detalles y cuotas</span>
+                                <span>Ver Evento</span>
                             </a>
                         </div>
                     </div>
