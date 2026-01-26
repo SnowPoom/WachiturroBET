@@ -57,7 +57,7 @@ public class ApuestaController extends HttpServlet {
         int id = Integer.parseInt(idStr);
         EventoJPADAO eventoDAO = new EventoJPADAO(em);
         Evento evento = eventoDAO.consultarDetallesEvento(id);
-
+        
         req.setAttribute("eventoDetalle", evento);
         req.getRequestDispatcher("/jsp/detalleEvento.jsp").forward(req, resp);
     }

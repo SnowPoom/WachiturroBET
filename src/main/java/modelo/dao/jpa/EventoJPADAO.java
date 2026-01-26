@@ -8,6 +8,7 @@ import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 import modelo.dao.EventoDAO;
 import modelo.entidades.Evento;
+import modelo.entidades.Pronostico;
 import modelo.entidades.TipoCategoria;
 
 public class EventoJPADAO implements EventoDAO {
@@ -32,7 +33,11 @@ public class EventoJPADAO implements EventoDAO {
 
     @Override
     public Evento consultarDetallesEvento(int id) {
-        return em.find(Evento.class, id);
+    	PronosticoJPADAO pronosticosDAO = new PronosticoJPADAO(em);
+    	List<Pronostico> pronosticos = pronosticosDAO.obtenerPronosticosPorEvento(em.find(Evento.class, id));
+    	Evento evento = em.find(Evento.class, id);
+    	evento.setPronosticos(pronosticos);
+        return evento;
     }
     
     @Override
