@@ -108,9 +108,12 @@ public class Evento {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         return this.fecha.format(fmt);
     }
-    
-    @Override
-    public String toString() {
-		return "Evento [id=" + id + ", nombre=" + nombre + ", fecha=" + fecha + ", categoria=" + categoria + "]";
+
+	@Override
+	public String toString() {
+		return "Evento [id=" + id + ", nombre=" + nombre + ", fecha=" + fecha + ", categoria=" + categoria
+				+ ", descripcion=" + descripcion + ", estado=" + estado + ", pronosticos=" + pronosticos + "]";
 	}
+    
+   
 }
