@@ -61,13 +61,23 @@
                         
                         <div class="card-content">
                         	<div class="grid-2" style="gap: 0.5rem;">
-                            	<a href="${pageContext.request.contextPath}/ApuestaController?ruta=seleccionarEvento&id=${evento.id}" 
-                               	   class="btn btn-outline"
-                               	   style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%;">
-                                
-                                	<span>Ver Evento</span>
-                            	</a>
-                        	</div>    	
+                                <c:choose>
+                                    <c:when test="${evento.estado == false}">
+                                        <!-- Evento finalizado: mostrar estado y deshabilitar apuesta -->
+                                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:1rem;">
+                                            <span class="badge" style="background:#ef4444; color:#fff; margin-bottom:0.5rem;">Finalizado</span>
+                                            <button class="btn btn-outline" disabled style="width:100%;">Apostar no disponible</button>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="${pageContext.request.contextPath}/ApuestaController?ruta=seleccionarEvento&id=${evento.id}" 
+                                           class="btn btn-outline"
+                                           style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%;">
+                                            <span>Ver Evento</span>
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
+                        	</div>    
                         </div>
                     </div>
                 </c:forEach>

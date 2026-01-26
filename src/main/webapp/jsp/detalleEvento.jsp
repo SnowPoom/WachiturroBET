@@ -47,35 +47,48 @@
         </div>
 
         <div class="card-content">
-            <label class="card-desc">Monto:</label>
-            <form action="${pageContext.request.contextPath}/ApuestaController" method="post">
-                <input type="hidden" name="ruta" value="ingresarMonto" />
-                <input type="hidden" name="idEvento" value="${eventoDetalle.id}" />
-                <input type="number" name="monto" class="input margin" placeholder="0.00" step="0.01" required style="height:2.2rem; width: 200px;">
-
-                <div class="grid-2" style="margin-top: 1rem; column-gap: 2rem; row-gap: 0.8rem;">
-                    <c:forEach var="p" items="${eventoDetalle.pronosticos}">
-                        
-                        <div style="display: flex; align-items: center; padding: 0.35rem 0;">
-                            
-                            <div style="flex: 0 0 40%; display: flex; align-items: center; gap: 0.5rem; padding-right: 0.5rem;">
-                                <input type="radio" id="idPronostico-${p.id}" name="idPronostico" value="${p.id}" required style="cursor: pointer; flex-shrink: 0;" />
-                                <label for="idPronostico-${p.id}" style="margin: 0; cursor: pointer; font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${p.descripcion}
-                                </label>
-                            </div>
-                    
-                            <div style="flex: 1;">
-                                <button type="submit" class="btn btn-outline" style="width: 140px; padding: 0.3rem 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; font-size: 0.9rem;">
-                                    <span>Apostar</span>
-                                    <span class="text-purple font-bold" style="margin-left: 0.4rem;">${p.cuotaActual}</span>
-                                </button>
-                            </div>
-                            
+            <c:choose>
+                <c:when test="${eventoDetalle.estado == false}">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
+                        <span class="badge" style="background:#ef4444; color:#fff; padding:0.4rem 0.6rem;">Finalizado</span>
+                        <p class="card-desc">Este evento ya finalizó y no acepta nuevas apuestas.</p>
+                        <div style="margin-top: 1rem;">
+                            <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar" class="btn btn-ghost">Volver a eventos</a>
                         </div>
-                    </c:forEach>
-                </div>
-            </form>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <label class="card-desc">Monto:</label>
+                    <form action="${pageContext.request.contextPath}/ApuestaController" method="post">
+                        <input type="hidden" name="ruta" value="ingresarMonto" />
+                        <input type="hidden" name="idEvento" value="${eventoDetalle.id}" />
+                        <input type="number" name="monto" class="input margin" placeholder="0.00" step="0.01" required style="height:2.2rem; width: 200px;">
+
+                        <div class="grid-2" style="margin-top: 1rem; column-gap: 2rem; row-gap: 0.8rem;">
+                            <c:forEach var="p" items="${eventoDetalle.pronosticos}">
+                                
+                                <div style="display: flex; align-items: center; padding: 0.35rem 0;">
+                                    
+                                    <div style="flex: 0 0 40%; display: flex; align-items: center; gap: 0.5rem; padding-right: 0.5rem;">
+                                        <input type="radio" id="idPronostico-${p.id}" name="idPronostico" value="${p.id}" required style="cursor: pointer; flex-shrink: 0;" />
+                                        <label for="idPronostico-${p.id}" style="margin: 0; cursor: pointer; font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            ${p.descripcion}
+                                        </label>
+                                    </div>
+                            
+                                    <div style="flex: 1;">
+                                        <button type="submit" class="btn btn-outline" style="width: 140px; padding: 0.3rem 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; font-size: 0.9rem;">
+                                            <span>Apostar</span>
+                                            <span class="text-purple font-bold" style="margin-left: 0.4rem;">${p.cuotaActual}</span>
+                                        </button>
+                                    </div>
+                                    
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </form>
+                </c:otherwise>
+            </c:choose>
 
             <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(168, 85, 247, 0.1); text-align: center;">
                 <a href="${pageContext.request.contextPath}/ListarEventosController?ruta=entrar" class="btn btn-ghost">

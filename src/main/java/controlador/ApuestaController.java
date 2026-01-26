@@ -36,7 +36,7 @@ public class ApuestaController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-   	 	ruteador(req, resp);
+    		ruteador(req, resp);
     }
 
     private void ruteador(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -51,7 +51,7 @@ public class ApuestaController extends HttpServlet {
 	}
     
     private void seleccionarEvento(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    	String idStr = req.getParameter("id");
+     String idStr = req.getParameter("id");
         EntityManager em = JPAUtil.getEntityManager();
 
         int id = Integer.parseInt(idStr);
@@ -81,6 +81,28 @@ public class ApuestaController extends HttpServlet {
             String idPronosticoStr = req.getParameter("idPronostico");
             String idEventoStr = req.getParameter("idEvento"); 
 
+            // Si se proporciona idEvento, verificar que el evento exista y esté activo
+            Evento evento = null;
+            if (idEventoStr != null) {
+                try {
+                    int idEvento = Integer.parseInt(idEventoStr);
+                    evento = em.find(Evento.class, idEvento);
+                    if (evento != null && !evento.isEstado()) {
+                        // Evento finalizado: no permitir apuesta
+                        session.setAttribute("flash_status", "ERROR");
+                        session.setAttribute("flash_operacion", "APOSTAR");
+                        session.setAttribute("flash_message", "mostrarEventoFinalizado");
+
+                        String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
+                        redirectUrl += "&id=" + idEventoStr;
+                        resp.sendRedirect(redirectUrl);
+                        return;
+                    }
+                } catch (NumberFormatException ignored) {
+                    evento = null;
+                }
+            }
+
             Double monto = null;
             try {
                 if (montoStr != null) {
@@ -96,7 +118,8 @@ public class ApuestaController extends HttpServlet {
             if (!esMontoValido(monto)) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_operacion", "APOSTAR");
-                
+                // Nuevo: indicar mensaje específico para monto inválido
+                session.setAttribute("flash_message", "mostrarMontoInvalido");
                 
                 String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
                 if (idEventoStr != null) redirectUrl += "&id=" + idEventoStr; 

@@ -32,6 +32,16 @@
             text-align: center;
             font-size: 0.9rem;
         }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -48,6 +58,25 @@
             </div>
             
             <div class="card-content">
+                <!-- Mostrar mensaje flash guardado en sesión (RegistroController y otros controladores usan flash_status/flash_message) -->
+                <c:if test="${not empty sessionScope.flash_message}">
+                    <c:choose>
+                        <c:when test="${sessionScope.flash_status == 'OK'}">
+                            <div class="alert-success">
+                                ${sessionScope.flash_message}
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="alert-error">
+                                ${sessionScope.flash_message}
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:remove var="flash_message" scope="session" />
+                    <c:remove var="flash_status" scope="session" />
+                    <c:remove var="flash_operacion" scope="session" />
+                </c:if>
+
                 <% if(request.getAttribute("error") != null) { %>
                     <div class="alert-error">
                         <%= request.getAttribute("error") %>
@@ -55,7 +84,7 @@
                 <% } %>
 
                 <form action="${pageContext.request.contextPath}/IniciarSesionController" method="POST">
-					<input type="hidden" name="ruta" value="ingresarCredenciales">	
+				<input type="hidden" name="ruta" value="ingresarCredenciales">	
                     <div class="form-group">
                         <label class="label" for="email">Correo Electrónico</label>
                         <input class="input" id="email" name="email" type="email" placeholder="tu@email.com" required>
