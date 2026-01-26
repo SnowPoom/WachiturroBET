@@ -17,7 +17,6 @@ public class BilleteraJPADAO implements IBilleteraDAO {
     public BilleteraJPADAO(EntityManager em) {
         this.em = em;
     }
- // --- NUEVO MÉTODO AGREGADO SEGÚN DIAGRAMA (Paso 2.2) ---
     @Override
     public boolean validarMonto(double monto) {
         // Validación lógica: El monto debe ser mayor a 0 para recargar

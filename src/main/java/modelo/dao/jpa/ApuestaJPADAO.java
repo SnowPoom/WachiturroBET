@@ -53,7 +53,6 @@ public class ApuestaJPADAO implements ApuestaDAO {
         }
         return q.getResultList();
     }
- // --- MÉTODO CORREGIDO ---
     @Override
     public void guardarMovimiento(double monto, Pronostico pronostico, UsuarioRegistrado usuario) {
         EntityTransaction tx = em.getTransaction();
@@ -120,6 +119,7 @@ public class ApuestaJPADAO implements ApuestaDAO {
             throw new RuntimeException("Error interno al procesar la apuesta: " + e.getMessage());
         }
     }
+    
  // --- MÉTODOS DEL DIAGRAMA CU12 ---
 
     // 3.4: obtenerApuestasPorPronostico (Apuestas Ganadoras)

@@ -71,6 +71,9 @@ public class CrearEventoController extends HttpServlet {
                 session.removeAttribute("flash_message");
             }
         }
+        TipoCategoria[] listaCategorias = TipoCategoria.values();
+        // Los enviamos al JSP
+        req.setAttribute("categorias", listaCategorias);
         // ------------------------------------
 
         RequestDispatcher rd = req.getRequestDispatcher("/jsp/nuevoEvento.jsp");

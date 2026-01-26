@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -69,11 +70,14 @@
                         </div>
                         <div class="form-group">
                             <label class="label">Categoría</label>
-                            <select name="categoria" class="input" style="appearance: none;">
-                                <option value="DEPORTES">Deportes</option>
-                                <option value="ESPORTS">E-Sports</option>
-                                <option value="POLITICA">Política</option>
-                                <option value="OTROS">Otros</option>
+                            <select name="categoria" class="input" style="appearance: none;" required>
+                                <option value="" disabled selected>Seleccione una opción...</option>
+                                
+                                <%-- Iteramos sobre la lista que envió el controlador --%>
+                                <c:forEach items="${categorias}" var="cat">
+                                    <option value="${cat}">${cat}</option>
+                                </c:forEach>
+                                
                             </select>
                         </div>
                     </div>
