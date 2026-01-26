@@ -20,10 +20,8 @@ public class Apuesta {
 
     private LocalDateTime fecha;
 
-    // cuota registrada al momento de apostar
     private double cuotaRegistrada;
 
-    // Relación ManyToOne hacia Pronostico
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_pronostico")
     private Pronostico pronostico;

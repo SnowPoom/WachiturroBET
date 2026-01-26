@@ -19,13 +19,6 @@ public class EventoJPADAO implements EventoDAO {
     }
 
     @Override
-    public String obtenerNombreEvento() {
-        TypedQuery<String> q = em.createQuery("SELECT e.nombre FROM Evento e", String.class);
-        q.setMaxResults(1);
-        return q.getResultList().stream().findFirst().orElse("Evento desconocido");
-    }
-
-    @Override
     public List<Evento> obtenerTodosLosEventos() {
         TypedQuery<Evento> q = em.createQuery("SELECT e FROM Evento e", Evento.class);
         return q.getResultList();
@@ -57,20 +50,17 @@ public class EventoJPADAO implements EventoDAO {
 
     @Override
     public boolean crearEvento(Evento evento) {
-    	// 1. Verificación de seguridad básica (evitar NullPointerException)
         if (evento == null) {
             return false;
         }
 
-        // 2. Aplicamos tu método de validación extrayendo los datos del objeto
         boolean datosValidos = validarDatos(
             evento.getNombre(),
             evento.getDescripcion(),
             evento.getFecha(),
-            evento.getCategoria() // Asumo que tienes un getter para la categoría
+            evento.getCategoria()
         );
 
-        // Si la validación falla, retornamos false inmediatamente sin tocar la BD
         if (!datosValidos) {
             System.out.println("Validación fallida: Datos incorrectos o fecha pasada.");
             return false;
@@ -78,7 +68,7 @@ public class EventoJPADAO implements EventoDAO {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            if(!evento.isEstado()) evento.setEstado(true); // Por defecto activo
+            if(!evento.isEstado()) evento.setEstado(true);
             em.persist(evento);
             tx.commit();
             return true;
@@ -89,7 +79,6 @@ public class EventoJPADAO implements EventoDAO {
         }
     }
     
-    // Método necesario para finalizar evento (lógica de negocio específica)
     public boolean finalizarEvento(Evento evento) {
         EntityTransaction tx = em.getTransaction();
         try {
@@ -105,24 +94,19 @@ public class EventoJPADAO implements EventoDAO {
         }
     }
 
-    // --- NUEVOS MÉTODOS PARA EL REST CRUD ---
-
     @Override
     public boolean actualizarEvento(Evento evento) {
-    	// 1. Verificación de seguridad básica (evitar NullPointerException)
         if (evento == null) {
             return false;
         }
 
-        // 2. Aplicamos tu método de validación extrayendo los datos del objeto
         boolean datosValidos = validarDatos(
             evento.getNombre(),
             evento.getDescripcion(),
             evento.getFecha(),
-            evento.getCategoria() // Asumo que tienes un getter para la categoría
+            evento.getCategoria()
         );
 
-        // Si la validación falla, retornamos false inmediatamente sin tocar la BD
         if (!datosValidos) {
             return false;
         }

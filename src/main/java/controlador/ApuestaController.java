@@ -92,13 +92,10 @@ public class ApuestaController extends HttpServlet {
                 }
             } catch (Exception e) { monto = null; }
             
-            
-
-            // Validación 1: monto inválido
+           
             if (!esMontoValido(monto)) {
                 session.setAttribute("flash_status", "ERROR");
                 session.setAttribute("flash_operacion", "APOSTAR");
-                session.setAttribute("flash_message", "mostrarMontoInvalido");
                 
                 
                 String redirectUrl = req.getContextPath() + "/ApuestaController?ruta=seleccionarEvento";
@@ -107,7 +104,6 @@ public class ApuestaController extends HttpServlet {
                 return;
             }
 
-            // Validación 2: fondos insuficientes
             BilleteraJPADAO billeteraDAO = new BilleteraJPADAO(em);
             boolean tieneFondos = billeteraDAO.existenFondosValidos(usuario, monto);
             if (!tieneFondos) {
@@ -122,7 +118,6 @@ public class ApuestaController extends HttpServlet {
                 return;
             }
 
-            // Todo OK: proceder a apostar
             Pronostico pronostico = null;
             if (idPronosticoStr != null) {
                 try {
