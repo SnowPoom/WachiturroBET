@@ -121,15 +121,6 @@
             <div class="card-content text-center" style="padding-top: 2rem; padding-bottom: 2rem;">
                 <div class="card-desc" style="color: #e2e8f0;">Saldo Disponible</div>
                 <div style="font-size: 3.5rem; font-weight: bold; margin: 1rem 0;">$<%= sessionSaldoObj != null ? sessionSaldoObj : 2450.0 %></div>
-                <div class="flex-center gap-4">
-                    <span class="badge badge-green">
-                        <svg class="icon" style="width: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>
-                        +$750 este mes
-                    </span>
-                    <span class="badge badge-purple" style="color: #93c5fd; background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.3);">
-                        Verificado
-                    </span>
-                </div>
             </div>
         </div>
 

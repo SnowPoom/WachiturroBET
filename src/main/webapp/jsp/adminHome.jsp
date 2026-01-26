@@ -23,7 +23,7 @@
                 <span>WachiturroBet Admin</span>
             </a>
             <div class="flex-center gap-2">
-                <a href="profile.jsp" class="btn btn-outline">CerrarSesión</a>
+                <a href="${pageContext.request.contextPath}/LogoutController" class="btn btn-ghost" style="color: #f87171; border: 1px solid rgba(248,113,113,0.3);">Cerrar Sesión</a>
             </div>
         </div>
     </header>

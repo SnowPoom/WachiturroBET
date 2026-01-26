@@ -30,4 +30,12 @@ public class UsuarioJPADAO {
         } 
         return usuario;
     }
+
+    public void finalizarSesion(int idUsuario) {
+        if (idUsuario <= 0) return;
+        Usuario u = emf.find(Usuario.class, idUsuario);
+        if (u != null) {
+            emf.merge(u);
+        }
+    }
 }
